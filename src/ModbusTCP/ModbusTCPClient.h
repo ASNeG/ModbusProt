@@ -42,7 +42,7 @@ namespace ModbusTCP
 		using StateCallback = std::function<void (ModbusTCPClientState)>;
 
 		ModbusTCPClient(
-			asio::io_context ctx
+			asio::io_context& ctx
 		);
 		~ModbusTCPClient(void);
 

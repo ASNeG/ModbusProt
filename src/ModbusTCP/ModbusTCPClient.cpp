@@ -27,7 +27,7 @@ namespace ModbusTCP
 
 	constexpr auto use_nothrow_awaitable = asio::experimental::as_tuple(asio::use_awaitable);
 
-	ModbusTCPClient::ModbusTCPClient(asio::io_context ctx)
+	ModbusTCPClient::ModbusTCPClient(asio::io_context& ctx)
 	: socket_(ctx)
 	, state_(ModbusTCPClientState::Init)
 	{
