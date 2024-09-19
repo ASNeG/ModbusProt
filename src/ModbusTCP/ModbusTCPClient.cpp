@@ -30,11 +30,55 @@ namespace ModbusTCP
 	ModbusTCPClient::ModbusTCPClient(asio::io_context& ctx)
 	: socket_(ctx)
 	, state_(ModbusTCPClientState::Init)
+	, useOwnThread_(false)
+	{
+	}
+
+	ModbusTCPClient::ModbusTCPClient(
+		void
+	)
+	: socket_(ctx_)
+	, state_(ModbusTCPClientState::Init)
+	, useOwnThread_(true)
+	, thread_([this](void){ startThread(); })
 	{
 	}
 
 	ModbusTCPClient::~ModbusTCPClient(void)
 	{
+		// Stop own event loop thread
+		stopThread();
+	}
+
+	void ModbusTCPClient::startThread(void)
+	{
+		work_ = new asio::io_context::work(ctx_);
+		ctx_.run();
+	}
+
+	void ModbusTCPClient::stopThread(void)
+	{
+		if (useOwnThread_) {
+			delete work_;
+			work_ = nullptr;
+			thread_.join();
+		}
+	}
+
+	bool
+	ModbusTCPClient::getEndpoint(
+		const std::string& ipAddress,
+		const std::string& port,
+		asio::ip::tcp::endpoint& endpoint
+	)
+	{
+		try {
+			endpoint = *asio::ip::tcp::resolver(socket_.get_executor()).resolve(ipAddress, port);
+		}
+		catch (...) {
+			return false;
+		}
+		return true;
 	}
 
 	asio::awaitable<bool>
@@ -44,6 +88,8 @@ namespace ModbusTCP
 		uint32_t connectTimeout
 	)
 	{
+		std::cout << "ModbusTCPClient::connectToServer" << std::endl;
+
 		// Set connecting state
 		state_ = ModbusTCPClientState::Connecting;
 		stateCallback(state_);
@@ -70,6 +116,7 @@ namespace ModbusTCP
 		uint32_t connectTimeout
 	)
 	{
+		std::cout << "ModbusTCPClient::clientLoop" << std::endl;
 		for(;;) {
 			// Connect to server
 			auto rc = co_await connectToServer(
@@ -95,6 +142,7 @@ namespace ModbusTCP
 		uint32_t connectTimeout
 	)
 	{
+		std::cout << "ModbusTCPClient::connect" << std::endl;
 		stateCallback_ = stateCallback;
 
 		// Connect to server

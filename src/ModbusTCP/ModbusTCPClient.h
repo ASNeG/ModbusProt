@@ -44,8 +44,16 @@ namespace ModbusTCP
 		ModbusTCPClient(
 			asio::io_context& ctx
 		);
+		ModbusTCPClient(
+			void
+		);
 		~ModbusTCPClient(void);
 
+		bool getEndpoint(
+			const std::string& ipAddress,
+			const std::string& port,
+			asio::ip::tcp::endpoint& endpoint
+		);
 		asio::awaitable<void> connect(
 			asio::ip::tcp::endpoint target,
 			StateCallback stateCallback,
@@ -54,9 +62,17 @@ namespace ModbusTCP
 		void disconnect(void);
 
 	  private:
+		bool useOwnThread_ = false;
+		std::thread thread_;
+
+		asio::io_context ctx_;
+		asio::io_context::work *work_ = nullptr;
 		ModbusTCPClientState state_;
 		asio::ip::tcp::socket socket_;
 		StateCallback stateCallback_;
+
+		void startThread(void);
+		void stopThread(void);
 
 		asio::awaitable<bool> connectToServer(
 			asio::ip::tcp::endpoint targetEndpoint,
