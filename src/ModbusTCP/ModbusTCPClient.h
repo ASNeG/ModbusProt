@@ -32,7 +32,6 @@ namespace ModbusTCP
 		Connecting,
 		Connected,
 		Close,
-		WaitForReconnect,
 		Error
 	};
 
@@ -54,10 +53,10 @@ namespace ModbusTCP
 			const std::string& port,
 			asio::ip::tcp::endpoint& endpoint
 		);
-		asio::awaitable<void> connect(
+		void connect(
 			asio::ip::tcp::endpoint target,
 			StateCallback stateCallback,
-			uint32_t connectTimeout = 0
+			uint32_t reconnectTimeout = 0
 		);
 		void disconnect(void);
 
@@ -69,7 +68,6 @@ namespace ModbusTCP
 		asio::io_context::work *work_ = nullptr;
 		ModbusTCPClientState state_;
 		asio::ip::tcp::socket socket_;
-		StateCallback stateCallback_;
 
 		void startThread(void);
 		void stopThread(void);
@@ -77,12 +75,12 @@ namespace ModbusTCP
 		asio::awaitable<bool> connectToServer(
 			asio::ip::tcp::endpoint targetEndpoint,
 			StateCallback stateCallback,
-			uint32_t connectTimeout
+			uint32_t reconnectTimeout
 		);
 		asio::awaitable<void> clientLoop(
 			asio::ip::tcp::endpoint targetEndpoint,
 			StateCallback stateCallback,
-			uint32_t connectTimeout
+			uint32_t reconnectTimeout
 		);
 	};
 

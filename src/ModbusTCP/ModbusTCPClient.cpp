@@ -85,7 +85,7 @@ namespace ModbusTCP
 	ModbusTCPClient::connectToServer(
 		asio::ip::tcp::endpoint targetEndpoint,
 		StateCallback stateCallback,
-		uint32_t connectTimeout
+		uint32_t reconnectTimeout
 	)
 	{
 		std::cout << "ModbusTCPClient::connectToServer" << std::endl;
@@ -113,7 +113,7 @@ namespace ModbusTCP
 	ModbusTCPClient::clientLoop(
 		asio::ip::tcp::endpoint targetEndpoint,
 		StateCallback stateCallback,
-		uint32_t connectTimeout
+		uint32_t reconnectTimeout
 	)
 	{
 		std::cout << "ModbusTCPClient::clientLoop" << std::endl;
@@ -122,12 +122,20 @@ namespace ModbusTCP
 			auto rc = co_await connectToServer(
 				targetEndpoint,
 				stateCallback,
-				connectTimeout
+				reconnectTimeout
 
 			);
+			if (!rc && reconnectTimeout ==  0) {
+				// Set error state
+				state_ = ModbusTCPClientState::Error;
+				stateCallback(state_);
+				co_return;
+			}
 			if (!rc) {
-				// Start timer
-
+				// Start reconnect timer
+				asio::steady_timer timer(socket_.get_executor());
+				timer.expires_at(std::chrono::steady_clock::now() + std::chrono::seconds(reconnectTimeout));
+				co_await timer.async_wait(use_nothrow_awaitable);
 				continue;
 			}
 		}
@@ -135,24 +143,21 @@ namespace ModbusTCP
 		co_return;
 	}
 
-	asio::awaitable<void>
+	void
 	ModbusTCPClient::connect(
 		asio::ip::tcp::endpoint target,
 		StateCallback stateCallback,
-		uint32_t connectTimeout
+		uint32_t reconnectTimeout
 	)
 	{
 		std::cout << "ModbusTCPClient::connect" << std::endl;
-		stateCallback_ = stateCallback;
 
 		// Connect to server
 		co_spawn(
 			socket_.get_executor(),
-			clientLoop(target, stateCallback, connectTimeout),
+			clientLoop(target, stateCallback, reconnectTimeout),
 			asio::detached
 		);
-
-		co_return;
 	}
 
 	void

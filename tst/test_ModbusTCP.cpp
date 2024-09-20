@@ -19,6 +19,7 @@ namespace TestModbusTCP
 	const std::string serverPort = "1234";
 
 	void connectionStateCallback(ModbusTCPClientState clientState) {
+		std::cout << "STATE: ";
 		std::cout << "...." << static_cast<typename std::underlying_type<ModbusTCPClientState>::type>(clientState) << std::endl;
 	}
 
@@ -30,10 +31,8 @@ namespace TestModbusTCP
     	ModbusTCPClient client;
     	assert_equals("getEndpoint fails", client.getEndpoint(serverIP, serverPort, serverEndpoint), true);
 
-    	std::cout << "xxx..." << std::endl;
-
     	// Client connect to not existing server
-    	client.connect(serverEndpoint, stateCallback1, 0);
+    	client.connect(serverEndpoint, connectionStateCallback, 0);
     	sleep(10);
 
     }
