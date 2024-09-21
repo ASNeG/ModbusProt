@@ -61,6 +61,7 @@ namespace ModbusTCP
 		void disconnect(void);
 
 	  private:
+		bool loopReady_ = false;
 		bool useOwnThread_ = false;
 		std::thread thread_;
 

@@ -97,6 +97,7 @@ namespace ModbusTCP
 		// Connect to server
 		auto [e] = co_await socket_.async_connect(targetEndpoint, use_nothrow_awaitable);
 		if (e) {
+			std::cout << "ERR=" << e.message() << std::endl;
 			// Set close state
 			state_ = ModbusTCPClientState::Close;
 			stateCallback(state_);
@@ -117,7 +118,8 @@ namespace ModbusTCP
 	)
 	{
 		std::cout << "ModbusTCPClient::clientLoop" << std::endl;
-		for(;;) {
+		loopReady_ = true;
+		while(loopReady_) {
 			// Connect to server
 			auto rc = co_await connectToServer(
 				targetEndpoint,
@@ -125,7 +127,7 @@ namespace ModbusTCP
 				reconnectTimeout
 
 			);
-			if (!rc && reconnectTimeout ==  0) {
+			if (!rc && reconnectTimeout == 0) {
 				// Set error state
 				state_ = ModbusTCPClientState::Error;
 				stateCallback(state_);
@@ -134,7 +136,7 @@ namespace ModbusTCP
 			if (!rc) {
 				// Start reconnect timer
 				asio::steady_timer timer(socket_.get_executor());
-				timer.expires_at(std::chrono::steady_clock::now() + std::chrono::seconds(reconnectTimeout));
+				timer.expires_at(std::chrono::steady_clock::now() + std::chrono::milliseconds(reconnectTimeout));
 				co_await timer.async_wait(use_nothrow_awaitable);
 				continue;
 			}
@@ -163,7 +165,9 @@ namespace ModbusTCP
 	void
 	ModbusTCPClient::disconnect(void)
 	{
-		;
+		std::cout << "ModbusTCPClient::disconnect" << std::endl;
+		loopReady_ = false;
+		socket_.close();
 
 	}
 
