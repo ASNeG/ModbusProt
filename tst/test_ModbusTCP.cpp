@@ -39,17 +39,17 @@ namespace TestModbusTCP
 
     	// Create client object
     	ModbusTCPClient client;
-    	assert_equals("getEndpoint fails", client.getEndpoint(serverIP, serverPort, serverEndpoint), true);
+    	assert_equals(client.getEndpoint(serverIP, serverPort, serverEndpoint), true);
 
     	// Client connect to not existing server
     	stateVec_.clear();
     	numberStates_ = 3;
     	condition_.init();
     	client.connect(serverEndpoint, connectionStateCallback, 0);
-    	assert_equals("condition", condition_.wait(1000), true);
-    	assert_equals("1. state", stateVec_[0] == ModbusTCPClientState::Connecting, true);
-    	assert_equals("2. state", stateVec_[1] == ModbusTCPClientState::Close, true);
-    	assert_equals("3. state", stateVec_[2] == ModbusTCPClientState::Error, true);
+    	assert_equals(condition_.wait(1000), true);
+    	assert_equals(stateVec_[0] == ModbusTCPClientState::Connecting, true);
+    	assert_equals(stateVec_[1] == ModbusTCPClientState::Close, true);
+    	assert_equals(stateVec_[2] == ModbusTCPClientState::Error, true);
     }
 
     CPUNIT_TEST(TestModbusTCP, client_not_con_retry)
@@ -62,18 +62,16 @@ namespace TestModbusTCP
 
     	// Client connect to not existing server
     	stateVec_.clear();
-    	numberStates_ = 10;
+    	numberStates_ = 4;
     	condition_.init();
-    	client.connect(serverEndpoint, connectionStateCallback, 200);
-    	std::cout << "ddddd" << time(0) << std::endl;
-    	assert_equals("condition", condition_.wait(4000), true);
-    	std::cout << "ddddd" << time(0) << std::endl;
-    	assert_equals("state vector size", stateVec_.size() == 3, true);
-    	std::cout << "ddddd" << time(0) << std::endl;
-    	assert_equals("1. state", stateVec_[0] == ModbusTCPClientState::Connecting, true);
-    	assert_equals("2. state", stateVec_[1] == ModbusTCPClientState::Close, true);
-    	assert_equals("3. state", stateVec_[2] == ModbusTCPClientState::Error, true);
+    	client.connect(serverEndpoint, connectionStateCallback, 5000);
+    	assert_equals(condition_.wait(4000), true);
     	client.disconnect();
+    	assert_equals(stateVec_[0] == ModbusTCPClientState::Connecting, true);
+    	assert_equals(stateVec_[1] == ModbusTCPClientState::Close, true);
+    	assert_equals(stateVec_[2] == ModbusTCPClientState::Connecting,  true);
+    	assert_equals(stateVec_[3] == ModbusTCPClientState::Close, true);
+
     }
 
 }

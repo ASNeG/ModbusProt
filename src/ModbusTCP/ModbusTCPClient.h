@@ -64,6 +64,7 @@ namespace ModbusTCP
 		bool loopReady_ = false;
 		bool useOwnThread_ = false;
 		std::thread thread_;
+		asio::steady_timer timer_;
 
 		asio::io_context ctx_;
 		asio::io_context::work *work_ = nullptr;

@@ -38,14 +38,14 @@ namespace Test
 			cv_.wait(lk, [this]{ return ready_; });
 		}
 		else {
-			std::cout << "llll" << std::endl;
+			std::cout << "WAIT START" << std::endl;
 			while (!ready_) {
 				std::cout << "yy" << std::endl;
 				if (cv_.wait_for(lk, std::chrono::milliseconds(timeoutMs)) == std::cv_status::timeout) {
-					std::cout << "XXXX" << std::endl;
+					std::cout << "WAIT TIMEOUT" << std::endl;
 					return false;
 				}
-				std::cout << "YYY" << std::endl;
+				std::cout << "WAIT NEXT" << std::endl;
 			}
 		}
 

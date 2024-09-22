@@ -31,6 +31,7 @@ namespace ModbusTCP
 	: socket_(ctx)
 	, state_(ModbusTCPClientState::Init)
 	, useOwnThread_(false)
+	, timer_(socket_.get_executor())
 	{
 	}
 
@@ -134,14 +135,13 @@ namespace ModbusTCP
 				co_return;
 			}
 			if (!rc) {
-				// Start reconnect timer
-				asio::steady_timer timer(socket_.get_executor());
-				timer.expires_at(std::chrono::steady_clock::now() + std::chrono::milliseconds(reconnectTimeout));
-				co_await timer.async_wait(use_nothrow_awaitable);
+				timer_.expires_after(std::chrono::milliseconds(reconnectTimeout));
+				co_await timer_.async_wait(use_nothrow_awaitable);
 				continue;
 			}
 		}
 
+		std::cout << "LOOP END" << std::endl;
 		co_return;
 	}
 
@@ -167,6 +167,7 @@ namespace ModbusTCP
 	{
 		std::cout << "ModbusTCPClient::disconnect" << std::endl;
 		loopReady_ = false;
+		timer_.cancel();
 		socket_.close();
 
 	}
