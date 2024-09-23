@@ -64,7 +64,7 @@ namespace ModbusTCP
 		bool loopReady_ = false;
 		bool useOwnThread_ = false;
 		std::thread thread_;
-		asio::steady_timer timer_;
+		std::shared_ptr<asio::steady_timer> timer_ = nullptr;
 
 		asio::io_context ctx_;
 		asio::io_context::work *work_ = nullptr;
@@ -73,6 +73,8 @@ namespace ModbusTCP
 
 		void startThread(void);
 		void stopThread(void);
+		asio::awaitable<void> startTimer(uint32_t timeoutMs);
+		void stopTimer(void);
 
 		asio::awaitable<bool> connectToServer(
 			asio::ip::tcp::endpoint targetEndpoint,

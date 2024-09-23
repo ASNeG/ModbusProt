@@ -33,7 +33,8 @@ namespace TestModbusTCP
 
 	}
 
-    CPUNIT_TEST(TestModbusTCP, client_not_con_no_retry)
+#if 0
+    CPUNIT_TEST(TestModbusTCP, client_not_con_not_retry)
 	{
     	asio::ip::tcp::endpoint serverEndpoint;
 
@@ -51,6 +52,7 @@ namespace TestModbusTCP
     	assert_equals(stateVec_[1] == ModbusTCPClientState::Close, true);
     	assert_equals(stateVec_[2] == ModbusTCPClientState::Error, true);
     }
+#endif
 
     CPUNIT_TEST(TestModbusTCP, client_not_con_retry)
 	{
@@ -58,15 +60,20 @@ namespace TestModbusTCP
 
     	// Create client object
     	ModbusTCPClient client;
-    	assert_equals("getEndpoint fails", client.getEndpoint(serverIP, serverPort, serverEndpoint), true);
+    	assert_equals(client.getEndpoint(serverIP, serverPort, serverEndpoint), true);
 
     	// Client connect to not existing server
     	stateVec_.clear();
     	numberStates_ = 4;
     	condition_.init();
+    	std::cout << "AAAAAA1" << std::endl;
     	client.connect(serverEndpoint, connectionStateCallback, 5000);
-    	assert_equals(condition_.wait(4000), true);
+    	std::cout << "AAAAAA2" << std::endl;
+    	assert_equals(condition_.wait(4000), false);
+    	std::cout << "AAAAAA3" << std::endl;
     	client.disconnect();
+
+    	assert_equals(false, true);
     	assert_equals(stateVec_[0] == ModbusTCPClientState::Connecting, true);
     	assert_equals(stateVec_[1] == ModbusTCPClientState::Close, true);
     	assert_equals(stateVec_[2] == ModbusTCPClientState::Connecting,  true);

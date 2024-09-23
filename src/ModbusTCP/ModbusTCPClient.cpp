@@ -31,7 +31,6 @@ namespace ModbusTCP
 	: socket_(ctx)
 	, state_(ModbusTCPClientState::Init)
 	, useOwnThread_(false)
-	, timer_(socket_.get_executor())
 	{
 	}
 
@@ -63,6 +62,22 @@ namespace ModbusTCP
 			delete work_;
 			work_ = nullptr;
 			thread_.join();
+		}
+	}
+
+	asio::awaitable<void>
+	ModbusTCPClient::startTimer(uint32_t timeoutMs)
+	{
+		timer_ = std::make_shared<asio::steady_timer>(socket_.get_executor());
+		timer_->expires_after(std::chrono::milliseconds(timeoutMs));
+		co_await timer_->async_wait(use_nothrow_awaitable);
+	}
+
+	void
+	ModbusTCPClient::stopTimer(void)
+	{
+		if (timer_ != nullptr) {
+			timer_->cancel();
 		}
 	}
 
@@ -135,8 +150,12 @@ namespace ModbusTCP
 				co_return;
 			}
 			if (!rc) {
-				timer_.expires_after(std::chrono::milliseconds(reconnectTimeout));
-				co_await timer_.async_wait(use_nothrow_awaitable);
+				co_await startTimer(reconnectTimeout);
+#if 0
+				asio::steady_timer timer(socket_.get_executor());
+				timer.expires_after(std::chrono::milliseconds(reconnectTimeout));
+				co_await timer.async_wait(use_nothrow_awaitable);
+#endif
 				continue;
 			}
 		}
@@ -167,7 +186,7 @@ namespace ModbusTCP
 	{
 		std::cout << "ModbusTCPClient::disconnect" << std::endl;
 		loopReady_ = false;
-		timer_.cancel();
+		stopTimer();
 		socket_.close();
 
 	}
