@@ -19,7 +19,6 @@
 #define __ModbusProt_ModbusTCPClient_h__
 
 #include <functional>
-//#include <asio.hpp>
 
 #include "ModbusTCP/ModbusTCPBase.h"
 #include "ModbusTCP/ModbusTCP.h"
@@ -62,7 +61,7 @@ namespace ModbusTCP
 	  private:
 		bool loopReady_ = false;
 		std::shared_ptr<asio::steady_timer> timer_ = nullptr;
-		ModbusTCPClientState state_;
+		ModbusTCPClientState state_ = ModbusTCPClientState::Init;
 
 		void createTimer(void);
 		void destroyTimer(void);

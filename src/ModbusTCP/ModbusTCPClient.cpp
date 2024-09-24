@@ -31,7 +31,6 @@ namespace ModbusTCP
 		asio::io_context& ctx
 	)
 	: ModbusTCPBase(ctx)
-	, state_(ModbusTCPClientState::Init)
 	{
 		createTimer();
 	}
@@ -40,7 +39,6 @@ namespace ModbusTCP
 		void
 	)
 	: ModbusTCPBase()
-	, state_(ModbusTCPClientState::Init)
 	{
 		createTimer();
 	}

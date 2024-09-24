@@ -87,4 +87,19 @@ namespace TestModbusTCP
     	CPUNIT_ASSERT(stateVec_[5] == ModbusTCPClientState::Close);
     }
 
+    CPUNIT_TEST(TestModbusTCP, server_open_close)
+	{
+    	asio::ip::tcp::endpoint serverEndpoint;
+
+    	// Create server object
+    	ModbusTCPServer server;
+    	CPUNIT_ASSERT(server.getEndpoint(serverIP, serverPort, serverEndpoint) == true);
+
+    	// Open server acceptor
+    	CPUNIT_ASSERT(server.open(serverEndpoint) == true);
+
+    	// Close server acceptor
+    	server.close();
+    }
+
 }

@@ -15,46 +15,23 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#ifndef __ModbusProt_ModbusTCPServer_h__
-#define __ModbusProt_ModbusTCPServer_h__
-
-#include <functional>
-
-#include "ModbusTCP/ModbusTCPBase.h"
-#include "ModbusTCP/ModbusTCP.h"
+#ifndef __ModbusProt_ModbusServerHandler_h__
+#define __ModbusProt_ModbusServerHandler_h__
 
 namespace ModbusTCP
 {
 
-	enum class ModbusTCPServerState
-	{
-		Init
-	};
-
-	class ModbusTCPServer
-	: public ModbusTCPBase
+	class ModbusServerHandler
 	{
 	  public:
-		ModbusTCPServer(
-			asio::io_context& ctx
-		);
-		ModbusTCPServer(
+		ModbusServerHandler(
 			void
 		);
-		virtual ~ModbusTCPServer(
+		~ModbusServerHandler(
 			void
 		);
-
-		bool open(
-			asio::ip::tcp::endpoint listenEndpoint
-		);
-		void close(void);
 
 	  private:
-	  	ModbusTCPServerState state_ = ModbusTCPServerState::Init;
-	  	std::shared_ptr<asio::ip::tcp::acceptor> acceptor_ = nullptr;
-
-	  	asio::awaitable<void> listen(void);
 	};
 
 }

@@ -20,13 +20,57 @@
 namespace ModbusTCP
 {
 
-
-	ModbusTCPServer::ModbusTCPServer(void)
+	ModbusTCPServer::ModbusTCPServer(
+		asio::io_context& ctx
+	)
+	: ModbusTCPBase(ctx)
 	{
 	}
 
-	ModbusTCPServer::~ModbusTCPServer(void)
+	ModbusTCPServer::ModbusTCPServer(
+		void
+	)
+	: ModbusTCPBase()
 	{
+	}
+
+	ModbusTCPServer::~ModbusTCPServer(
+		void
+	)
+	{
+	}
+
+	bool
+	ModbusTCPServer::open(
+		asio::ip::tcp::endpoint listenEndpoint
+	)
+	{
+		std::cout << "ModbusTCPServer::open" << std::endl;
+
+		acceptor_ = std::make_shared<asio::ip::tcp::acceptor>(ctx_, listenEndpoint);
+		if (acceptor_ == nullptr) {
+			return false;
+		}
+		return true;
+	}
+
+	void
+	ModbusTCPServer::close(void)
+	{
+		std::cout << "ModbusTCPServer::close" << std::endl;
+		acceptor_->close();
+	}
+
+	asio::awaitable<void>
+	ModbusTCPServer::listen(void)
+	{
+		std::cout << "ModbusTCPServer::listen" << std::endl;
+
+		for (;;) {
+			auto client = co_await acceptor_->async_accept(asio::use_awaitable);
+		}
+
+		co_return;
 	}
 
 }
