@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 
+#include "ModbusTCP/ModbusTCPBase.h"
 #include "ModbusTCP/ModbusTCPClient.h"
 #include "ModbusTCP/ModbusTCPServer.h"
 
@@ -28,31 +29,39 @@ namespace TestModbusTCP
 		stateVec_.push_back(clientState);
 		numberStates_--;
 		if (numberStates_== 0) {
+			std::cout << "SEND SIGNAL..." << std::endl;
 			condition_.signal();
 		}
 
 	}
 
-#if 0
+    CPUNIT_TEST(TestModbusTCP, getEndpoint)
+	{
+    	asio::ip::tcp::endpoint serverEndpoint;
+
+    	// Create tcp base object
+    	ModbusTCPBase tcpBase;
+    	CPUNIT_ASSERT(tcpBase.getEndpoint(serverIP, serverPort, serverEndpoint) == true);
+	}
+
     CPUNIT_TEST(TestModbusTCP, client_not_con_not_retry)
 	{
     	asio::ip::tcp::endpoint serverEndpoint;
 
     	// Create client object
     	ModbusTCPClient client;
-    	assert_equals(client.getEndpoint(serverIP, serverPort, serverEndpoint), true);
+    	CPUNIT_ASSERT(client.getEndpoint(serverIP, serverPort, serverEndpoint) == true);
 
     	// Client connect to not existing server
     	stateVec_.clear();
     	numberStates_ = 3;
     	condition_.init();
     	client.connect(serverEndpoint, connectionStateCallback, 0);
-    	assert_equals(condition_.wait(1000), true);
-    	assert_equals(stateVec_[0] == ModbusTCPClientState::Connecting, true);
-    	assert_equals(stateVec_[1] == ModbusTCPClientState::Close, true);
-    	assert_equals(stateVec_[2] == ModbusTCPClientState::Error, true);
+    	CPUNIT_ASSERT(condition_.wait(1000) == true);
+    	CPUNIT_ASSERT(stateVec_[0] == ModbusTCPClientState::Connecting);
+    	CPUNIT_ASSERT(stateVec_[1] == ModbusTCPClientState::Close);
+    	CPUNIT_ASSERT(stateVec_[2] == ModbusTCPClientState::Error);
     }
-#endif
 
     CPUNIT_TEST(TestModbusTCP, client_not_con_retry)
 	{
@@ -60,25 +69,22 @@ namespace TestModbusTCP
 
     	// Create client object
     	ModbusTCPClient client;
-    	assert_equals(client.getEndpoint(serverIP, serverPort, serverEndpoint), true);
+    	CPUNIT_ASSERT(client.getEndpoint(serverIP, serverPort, serverEndpoint) == true);
 
     	// Client connect to not existing server
     	stateVec_.clear();
-    	numberStates_ = 4;
+    	numberStates_ = 6;
     	condition_.init();
-    	std::cout << "AAAAAA1" << std::endl;
-    	client.connect(serverEndpoint, connectionStateCallback, 5000);
-    	std::cout << "AAAAAA2" << std::endl;
-    	assert_equals(condition_.wait(4000), false);
-    	std::cout << "AAAAAA3" << std::endl;
+    	client.connect(serverEndpoint, connectionStateCallback, 200);
+    	CPUNIT_ASSERT(condition_.wait(3000) == true);
     	client.disconnect();
 
-    	assert_equals(false, true);
-    	assert_equals(stateVec_[0] == ModbusTCPClientState::Connecting, true);
-    	assert_equals(stateVec_[1] == ModbusTCPClientState::Close, true);
-    	assert_equals(stateVec_[2] == ModbusTCPClientState::Connecting,  true);
-    	assert_equals(stateVec_[3] == ModbusTCPClientState::Close, true);
-
+    	CPUNIT_ASSERT(stateVec_[0] == ModbusTCPClientState::Connecting);
+    	CPUNIT_ASSERT(stateVec_[1] == ModbusTCPClientState::Close);
+    	CPUNIT_ASSERT(stateVec_[2] == ModbusTCPClientState::Connecting);
+    	CPUNIT_ASSERT(stateVec_[3] == ModbusTCPClientState::Close);
+    	CPUNIT_ASSERT(stateVec_[4] == ModbusTCPClientState::Connecting);
+    	CPUNIT_ASSERT(stateVec_[5] == ModbusTCPClientState::Close);
     }
 
 }

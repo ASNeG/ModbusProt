@@ -9,7 +9,8 @@ option(PROJ_UNIT_TEST "Enable/Disable unittest (Default: OFF)" ON)
 
 set(CPUNIT_ROOT_DIR "${CMAKE_SOURCE_DIR}/../cpunit" CACHE STRING "cpunit root directory")
 set(ASIO_ROOT_DIR "${CMAKE_SOURCE_DIR}/../asio-1.30.2" CACHE STRING "asio root directory")
-set(ASIO_ENABLE_HANDLER_TRACKING)
+
+add_compile_options(-DASIO_ENABLE_HANDLER_TRACKING)
 
 include(src/CMakeLists.txt)
 

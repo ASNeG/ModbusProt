@@ -19,8 +19,9 @@
 #define __ModbusProt_ModbusTCPClient_h__
 
 #include <functional>
-#include <asio.hpp>
+//#include <asio.hpp>
 
+#include "ModbusTCP/ModbusTCPBase.h"
 #include "ModbusTCP/ModbusTCP.h"
 
 namespace ModbusTCP
@@ -36,6 +37,7 @@ namespace ModbusTCP
 	};
 
 	class ModbusTCPClient
+	: public ModbusTCPBase
 	{
 	  public:
 		using StateCallback = std::function<void (ModbusTCPClientState)>;
@@ -46,13 +48,10 @@ namespace ModbusTCP
 		ModbusTCPClient(
 			void
 		);
-		~ModbusTCPClient(void);
-
-		bool getEndpoint(
-			const std::string& ipAddress,
-			const std::string& port,
-			asio::ip::tcp::endpoint& endpoint
+		virtual ~ModbusTCPClient(
+			void
 		);
+
 		void connect(
 			asio::ip::tcp::endpoint target,
 			StateCallback stateCallback,
@@ -62,18 +61,12 @@ namespace ModbusTCP
 
 	  private:
 		bool loopReady_ = false;
-		bool useOwnThread_ = false;
-		std::thread thread_;
 		std::shared_ptr<asio::steady_timer> timer_ = nullptr;
-
-		asio::io_context ctx_;
-		asio::io_context::work *work_ = nullptr;
 		ModbusTCPClientState state_;
-		asio::ip::tcp::socket socket_;
 
-		void startThread(void);
-		void stopThread(void);
-		asio::awaitable<void> startTimer(uint32_t timeoutMs);
+		void createTimer(void);
+		void destroyTimer(void);
+		asio::awaitable<bool> startTimer(uint32_t timeoutMs);
 		void stopTimer(void);
 
 		asio::awaitable<bool> connectToServer(
