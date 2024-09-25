@@ -54,12 +54,13 @@ namespace ModbusTCP
 		}
 
 		// Create acceptor socket
-		acceptor_ = std::make_shared<asio::ip::tcp::acceptor>(ctx_, listenEndpoint);
+		acceptor_ = std::make_shared<asio::ip::tcp::acceptor>(ctx(), listenEndpoint);
 		if (acceptor_ == nullptr) {
 			return false;
 		}
 
 		// Call listen function
+		co_spawn(ctx(), listen(), asio::detached);
 
 		return true;
 	}
@@ -85,7 +86,9 @@ namespace ModbusTCP
 		std::cout << "TCPServer::listen" << std::endl;
 
 		for (;;) {
+			std::cout << "AA" << std::endl;
 			auto client = co_await acceptor_->async_accept(asio::use_awaitable);
+			std::cout << "BB" << std::endl;
 		}
 
 		co_return;

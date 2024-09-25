@@ -18,7 +18,6 @@
 #ifndef __ModbusProt_TCPBase_h__
 #define __ModbusProt_TCPBase_h__
 
-//#include <functional>
 #include <asio.hpp>
 
 #include "ModbusTCP/ModbusTCP.h"
@@ -39,17 +38,17 @@ namespace ModbusTCP
 			void
 		);
 
+		asio::io_context& ctx(void);
+
 		bool getEndpoint(
 			const std::string& ipAddress,
 			const std::string& port,
 			asio::ip::tcp::endpoint& endpoint
 		);
 
-	  protected:
-		asio::io_context ctx_;
-		asio::ip::tcp::socket socket_;
-
 	  private:
+		asio::io_context ctx_;			// Internal context
+		asio::io_context& ctxRef_;		// Reference to internal or external context
 		asio::io_context::work *work_ = nullptr;
 		bool useOwnThread_ = false;
 		std::thread thread_;

@@ -23,7 +23,7 @@ namespace ModbusTCP
 	TCPBase::TCPBase(
 		asio::io_context& ctx
 	)
-	: socket_(ctx)
+	: ctxRef_(ctx)
 	, useOwnThread_(false)
 	{
 	}
@@ -31,7 +31,7 @@ namespace ModbusTCP
 	TCPBase::TCPBase(
 		void
 	)
-	: socket_(ctx_)
+	: ctxRef_(ctx_)
 	, useOwnThread_(true)
 	, thread_([this](void){ startThread(); }) // Start own event loop thread
 	{
@@ -43,6 +43,12 @@ namespace ModbusTCP
 		stopThread();
 	}
 
+	asio::io_context&
+	TCPBase::ctx(void)
+	{
+		return ctxRef_;
+	}
+
 	bool
 	TCPBase::getEndpoint(
 		const std::string& ipAddress,
@@ -51,7 +57,7 @@ namespace ModbusTCP
 	)
 	{
 		try {
-			endpoint = *asio::ip::tcp::resolver(socket_.get_executor()).resolve(ipAddress, port);
+			endpoint = *asio::ip::tcp::resolver(ctx()).resolve(ipAddress, port);
 		}
 		catch (...) {
 			return false;
@@ -62,8 +68,8 @@ namespace ModbusTCP
 
 	void TCPBase::startThread(void)
 	{
-		work_ = new asio::io_context::work(ctx_);
-		ctx_.run();
+		work_ = new asio::io_context::work(ctx());
+		ctx().run();
 	}
 
 	void TCPBase::stopThread(void)

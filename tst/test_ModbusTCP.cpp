@@ -100,6 +100,8 @@ namespace TestModbusTCP
     	// Open server acceptor
     	CPUNIT_ASSERT(server.open(serverEndpoint, acceptCallback) == true);
 
+    	sleep(1);
+
     	// Close server acceptor
     	server.close();
     }

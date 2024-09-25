@@ -32,6 +32,7 @@ namespace ModbusTCP
 	)
 	: TCPBase(ctx)
 	{
+		socket_ = std::make_shared<asio::ip::tcp::socket>(TCPBase::ctx());
 		createTimer();
 	}
 
@@ -40,6 +41,7 @@ namespace ModbusTCP
 	)
 	: TCPBase()
 	{
+		socket_ = std::make_shared<asio::ip::tcp::socket>(ctx());
 		createTimer();
 	}
 
@@ -50,12 +52,15 @@ namespace ModbusTCP
 		// Stop Timer
 		stopTimer();
 		destroyTimer();
+
+		// Delete socket
+		socket_ = nullptr;
 	}
 
 	void
 	TCPClient::createTimer(void)
 	{
-		timer_ = std::make_shared<asio::steady_timer>(socket_.get_executor());
+		timer_ = std::make_shared<asio::steady_timer>(ctx());
 	}
 
 	void
@@ -97,7 +102,7 @@ namespace ModbusTCP
 		stateCallback(state_);
 
 		// Connect to server
-		auto [e] = co_await socket_.async_connect(targetEndpoint, use_nothrow_awaitable);
+		auto [e] = co_await socket_->async_connect(targetEndpoint, use_nothrow_awaitable);
 		if (e) {
 			// Set close state
 			state_ = TCPClientState::Close;
@@ -157,7 +162,7 @@ namespace ModbusTCP
 
 		// Connect to server
 		co_spawn(
-			socket_.get_executor(),
+			ctx(),
 			clientLoop(target, stateCallback, reconnectTimeout),
 			asio::detached
 		);
@@ -168,7 +173,7 @@ namespace ModbusTCP
 	{
 		std::cout << "TCPClient::disconnect" << std::endl;
 		loopReady_ = false;
-		socket_.close();
+		socket_->close();
 		stopTimer();
 	}
 
