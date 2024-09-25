@@ -15,23 +15,47 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#ifndef __ModbusProt_ModbusServerHandler_h__
-#define __ModbusProt_ModbusServerHandler_h__
+#ifndef __ModbusProt_TCPBase_h__
+#define __ModbusProt_TCPBase_h__
+
+//#include <functional>
+#include <asio.hpp>
+
+#include "ModbusTCP/ModbusTCP.h"
 
 namespace ModbusTCP
 {
 
-	class ModbusServerHandler
+	class TCPBase
 	{
 	  public:
-		ModbusServerHandler(
+		TCPBase(
+			asio::io_context& ctx
+		);
+		TCPBase(
 			void
 		);
-		~ModbusServerHandler(
+		virtual ~TCPBase(
 			void
 		);
 
+		bool getEndpoint(
+			const std::string& ipAddress,
+			const std::string& port,
+			asio::ip::tcp::endpoint& endpoint
+		);
+
+	  protected:
+		asio::io_context ctx_;
+		asio::ip::tcp::socket socket_;
+
 	  private:
+		asio::io_context::work *work_ = nullptr;
+		bool useOwnThread_ = false;
+		std::thread thread_;
+
+		void startThread(void);
+		void stopThread(void);
 	};
 
 }

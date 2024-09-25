@@ -15,12 +15,12 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#include "ModbusTCP/ModbusTCPBase.h"
+#include "ModbusTCP/TCPBase.h"
 
 namespace ModbusTCP
 {
 
-	ModbusTCPBase::ModbusTCPBase(
+	TCPBase::TCPBase(
 		asio::io_context& ctx
 	)
 	: socket_(ctx)
@@ -28,7 +28,7 @@ namespace ModbusTCP
 	{
 	}
 
-	ModbusTCPBase::ModbusTCPBase(
+	TCPBase::TCPBase(
 		void
 	)
 	: socket_(ctx_)
@@ -37,14 +37,14 @@ namespace ModbusTCP
 	{
 	}
 
-	ModbusTCPBase::~ModbusTCPBase(void)
+	TCPBase::~TCPBase(void)
 	{
 		// Stop own event loop thread
 		stopThread();
 	}
 
 	bool
-	ModbusTCPBase::getEndpoint(
+	TCPBase::getEndpoint(
 		const std::string& ipAddress,
 		const std::string& port,
 		asio::ip::tcp::endpoint& endpoint
@@ -60,13 +60,13 @@ namespace ModbusTCP
 		return true;
 	}
 
-	void ModbusTCPBase::startThread(void)
+	void TCPBase::startThread(void)
 	{
 		work_ = new asio::io_context::work(ctx_);
 		ctx_.run();
 	}
 
-	void ModbusTCPBase::stopThread(void)
+	void TCPBase::stopThread(void)
 	{
 		if (useOwnThread_) {
 			while (!work_) ;

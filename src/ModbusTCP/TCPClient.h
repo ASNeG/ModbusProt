@@ -15,18 +15,17 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#ifndef __ModbusProt_ModbusTCPClient_h__
-#define __ModbusProt_ModbusTCPClient_h__
+#ifndef __ModbusProt_TCPClient_h__
+#define __ModbusProt_TCPClient_h__
 
 #include <functional>
 
-#include "ModbusTCP/ModbusTCPBase.h"
-#include "ModbusTCP/ModbusTCP.h"
+#include "ModbusTCP/TCPBase.h"
 
 namespace ModbusTCP
 {
 
-	enum class ModbusTCPClientState
+	enum class TCPClientState
 	{
 		Init,
 		Connecting,
@@ -35,19 +34,19 @@ namespace ModbusTCP
 		Error
 	};
 
-	class ModbusTCPClient
-	: public ModbusTCPBase
+	class TCPClient
+	: public TCPBase
 	{
 	  public:
-		using StateCallback = std::function<void (ModbusTCPClientState)>;
+		using StateCallback = std::function<void (TCPClientState)>;
 
-		ModbusTCPClient(
+		TCPClient(
 			asio::io_context& ctx
 		);
-		ModbusTCPClient(
+		TCPClient(
 			void
 		);
-		virtual ~ModbusTCPClient(
+		virtual ~TCPClient(
 			void
 		);
 
@@ -61,7 +60,7 @@ namespace ModbusTCP
 	  private:
 		bool loopReady_ = false;
 		std::shared_ptr<asio::steady_timer> timer_ = nullptr;
-		ModbusTCPClientState state_ = ModbusTCPClientState::Init;
+		TCPClientState state_ = TCPClientState::Init;
 
 		void createTimer(void);
 		void destroyTimer(void);

@@ -15,56 +15,74 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#include "ModbusTCP/ModbusTCPServer.h"
+#include "ModbusTCP/TCPServer.h"
 
 namespace ModbusTCP
 {
 
-	ModbusTCPServer::ModbusTCPServer(
+	TCPServer::TCPServer(
 		asio::io_context& ctx
 	)
-	: ModbusTCPBase(ctx)
+	: TCPBase(ctx)
 	{
 	}
 
-	ModbusTCPServer::ModbusTCPServer(
+	TCPServer::TCPServer(
 		void
 	)
-	: ModbusTCPBase()
+	: TCPBase()
 	{
 	}
 
-	ModbusTCPServer::~ModbusTCPServer(
+	TCPServer::~TCPServer(
 		void
 	)
 	{
 	}
 
 	bool
-	ModbusTCPServer::open(
-		asio::ip::tcp::endpoint listenEndpoint
+	TCPServer::open(
+		asio::ip::tcp::endpoint listenEndpoint,
+		AcceptCallback acceptCallback
 	)
 	{
-		std::cout << "ModbusTCPServer::open" << std::endl;
+		std::cout << "TCPServer::open" << std::endl;
 
+		// Check parameter
+		if (acceptor_ != nullptr) {
+			return false;
+		}
+
+		// Create acceptor socket
 		acceptor_ = std::make_shared<asio::ip::tcp::acceptor>(ctx_, listenEndpoint);
 		if (acceptor_ == nullptr) {
 			return false;
 		}
+
+		// Call listen function
+
 		return true;
 	}
 
 	void
-	ModbusTCPServer::close(void)
+	TCPServer::close(void)
 	{
-		std::cout << "ModbusTCPServer::close" << std::endl;
+		std::cout << "TCPServer::close" << std::endl;
+
+		// Check parameter
+		if (acceptor_ == nullptr) {
+			return;
+		}
+
+		// Close and remove acceptor endpoint
 		acceptor_->close();
+		acceptor_ = nullptr;
 	}
 
 	asio::awaitable<void>
-	ModbusTCPServer::listen(void)
+	TCPServer::listen(void)
 	{
-		std::cout << "ModbusTCPServer::listen" << std::endl;
+		std::cout << "TCPServer::listen" << std::endl;
 
 		for (;;) {
 			auto client = co_await acceptor_->async_accept(asio::use_awaitable);

@@ -18,7 +18,7 @@
 #include <asio/experimental/as_tuple.hpp>
 #include <asio/experimental/awaitable_operators.hpp>
 
-#include "ModbusTCP/ModbusTCPClient.h"
+#include "ModbusTCP/TCPClient.h"
 
 namespace ModbusTCP
 {
@@ -27,23 +27,23 @@ namespace ModbusTCP
 
 	constexpr auto use_nothrow_awaitable = asio::experimental::as_tuple(asio::use_awaitable);
 
-	ModbusTCPClient::ModbusTCPClient(
+	TCPClient::TCPClient(
 		asio::io_context& ctx
 	)
-	: ModbusTCPBase(ctx)
+	: TCPBase(ctx)
 	{
 		createTimer();
 	}
 
-	ModbusTCPClient::ModbusTCPClient(
+	TCPClient::TCPClient(
 		void
 	)
-	: ModbusTCPBase()
+	: TCPBase()
 	{
 		createTimer();
 	}
 
-	ModbusTCPClient::~ModbusTCPClient(
+	TCPClient::~TCPClient(
 		void
 	)
 	{
@@ -53,19 +53,19 @@ namespace ModbusTCP
 	}
 
 	void
-	ModbusTCPClient::createTimer(void)
+	TCPClient::createTimer(void)
 	{
 		timer_ = std::make_shared<asio::steady_timer>(socket_.get_executor());
 	}
 
 	void
-	ModbusTCPClient::destroyTimer(void)
+	TCPClient::destroyTimer(void)
 	{
 		timer_ = nullptr;
 	}
 
 	asio::awaitable<bool>
-	ModbusTCPClient::startTimer(uint32_t timeoutMs)
+	TCPClient::startTimer(uint32_t timeoutMs)
 	{
 		timer_->expires_after(std::chrono::milliseconds(timeoutMs));
 		auto [e] = co_await timer_->async_wait(use_nothrow_awaitable);
@@ -76,7 +76,7 @@ namespace ModbusTCP
 	}
 
 	void
-	ModbusTCPClient::stopTimer(void)
+	TCPClient::stopTimer(void)
 	{
 		if (timer_ != nullptr) {
 			timer_->cancel();
@@ -84,41 +84,41 @@ namespace ModbusTCP
 	}
 
 	asio::awaitable<bool>
-	ModbusTCPClient::connectToServer(
+	TCPClient::connectToServer(
 		asio::ip::tcp::endpoint targetEndpoint,
 		StateCallback stateCallback,
 		uint32_t reconnectTimeout
 	)
 	{
-		std::cout << "ModbusTCPClient::connectToServer" << std::endl;
+		std::cout << "TCPClient::connectToServer" << std::endl;
 
 		// Set connecting state
-		state_ = ModbusTCPClientState::Connecting;
+		state_ = TCPClientState::Connecting;
 		stateCallback(state_);
 
 		// Connect to server
 		auto [e] = co_await socket_.async_connect(targetEndpoint, use_nothrow_awaitable);
 		if (e) {
 			// Set close state
-			state_ = ModbusTCPClientState::Close;
+			state_ = TCPClientState::Close;
 			stateCallback(state_);
 			co_return false;
 		}
 
 		// Set connected state
-		state_ = ModbusTCPClientState::Connected;
+		state_ = TCPClientState::Connected;
 		stateCallback(state_);
 		co_return true;
 	}
 
 	asio::awaitable<void>
-	ModbusTCPClient::clientLoop(
+	TCPClient::clientLoop(
 		asio::ip::tcp::endpoint targetEndpoint,
 		StateCallback stateCallback,
 		uint32_t reconnectTimeout
 	)
 	{
-		std::cout << "ModbusTCPClient::clientLoop" << std::endl;
+		std::cout << "TCPClient::clientLoop" << std::endl;
 		loopReady_ = true;
 		while(loopReady_) {
 			// Connect to server
@@ -130,7 +130,7 @@ namespace ModbusTCP
 			);
 			if (!rc && reconnectTimeout == 0) {
 				// Set error state
-				state_ = ModbusTCPClientState::Error;
+				state_ = TCPClientState::Error;
 				stateCallback(state_);
 				co_return;
 			}
@@ -147,13 +147,13 @@ namespace ModbusTCP
 	}
 
 	void
-	ModbusTCPClient::connect(
+	TCPClient::connect(
 		asio::ip::tcp::endpoint target,
 		StateCallback stateCallback,
 		uint32_t reconnectTimeout
 	)
 	{
-		std::cout << "ModbusTCPClient::connect" << std::endl;
+		std::cout << "TCPClient::connect" << std::endl;
 
 		// Connect to server
 		co_spawn(
@@ -164,9 +164,9 @@ namespace ModbusTCP
 	}
 
 	void
-	ModbusTCPClient::disconnect(void)
+	TCPClient::disconnect(void)
 	{
-		std::cout << "ModbusTCPClient::disconnect" << std::endl;
+		std::cout << "TCPClient::disconnect" << std::endl;
 		loopReady_ = false;
 		socket_.close();
 		stopTimer();

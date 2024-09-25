@@ -15,18 +15,18 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#include "ModbusServerHandler.h"
+#include "ModbusTCP/TCPServerHandler.h"
 
 namespace ModbusTCP
 {
 
-	ModbusServerHandler::ModbusServerHandler(
+	TCPServerHandler::TCPServerHandler(
 		void
 	)
 	{
 	}
 
-	ModbusServerHandler::~ModbusServerHandler(
+	TCPServerHandler::~TCPServerHandler(
 		void
 	)
 	{

@@ -3,10 +3,8 @@
 #include <iostream>
 #include <vector>
 
-#include "ModbusTCP/ModbusTCPBase.h"
-#include "ModbusTCP/ModbusTCPClient.h"
-#include "ModbusTCP/ModbusTCPServer.h"
-
+#include "ModbusTCP/TCPClient.h"
+#include "ModbusTCP/TCPServer.h"
 #include "Condition.h"
 
 namespace TestModbusTCP
@@ -20,10 +18,10 @@ namespace TestModbusTCP
 
 	Condition condition_;
 	uint32_t numberStates_ = 0;
-	std::vector<ModbusTCPClientState> stateVec_;
-	void connectionStateCallback(ModbusTCPClientState clientState) {
+	std::vector<TCPClientState> stateVec_;
+	void connectionStateCallback(TCPClientState clientState) {
 		std::cout << "STATE: ";
-		std::cout << "...." << static_cast<typename std::underlying_type<ModbusTCPClientState>::type>(clientState) << std::endl;
+		std::cout << "...." << static_cast<typename std::underlying_type<TCPClientState>::type>(clientState) << std::endl;
 
 		if (numberStates_ == 0) return;
 		stateVec_.push_back(clientState);
@@ -32,7 +30,11 @@ namespace TestModbusTCP
 			std::cout << "SEND SIGNAL..." << std::endl;
 			condition_.signal();
 		}
+	}
 
+	TCPServerHandler::SPtr acceptCallback(asio::ip::tcp::socket client)
+	{
+		return nullptr;
 	}
 
     CPUNIT_TEST(TestModbusTCP, getEndpoint)
@@ -40,7 +42,7 @@ namespace TestModbusTCP
     	asio::ip::tcp::endpoint serverEndpoint;
 
     	// Create tcp base object
-    	ModbusTCPBase tcpBase;
+    	TCPBase tcpBase;
     	CPUNIT_ASSERT(tcpBase.getEndpoint(serverIP, serverPort, serverEndpoint) == true);
 	}
 
@@ -49,7 +51,7 @@ namespace TestModbusTCP
     	asio::ip::tcp::endpoint serverEndpoint;
 
     	// Create client object
-    	ModbusTCPClient client;
+    	TCPClient client;
     	CPUNIT_ASSERT(client.getEndpoint(serverIP, serverPort, serverEndpoint) == true);
 
     	// Client connect to not existing server
@@ -58,9 +60,9 @@ namespace TestModbusTCP
     	condition_.init();
     	client.connect(serverEndpoint, connectionStateCallback, 0);
     	CPUNIT_ASSERT(condition_.wait(1000) == true);
-    	CPUNIT_ASSERT(stateVec_[0] == ModbusTCPClientState::Connecting);
-    	CPUNIT_ASSERT(stateVec_[1] == ModbusTCPClientState::Close);
-    	CPUNIT_ASSERT(stateVec_[2] == ModbusTCPClientState::Error);
+    	CPUNIT_ASSERT(stateVec_[0] == TCPClientState::Connecting);
+    	CPUNIT_ASSERT(stateVec_[1] == TCPClientState::Close);
+    	CPUNIT_ASSERT(stateVec_[2] == TCPClientState::Error);
     }
 
     CPUNIT_TEST(TestModbusTCP, client_not_con_retry)
@@ -68,7 +70,7 @@ namespace TestModbusTCP
     	asio::ip::tcp::endpoint serverEndpoint;
 
     	// Create client object
-    	ModbusTCPClient client;
+    	TCPClient client;
     	CPUNIT_ASSERT(client.getEndpoint(serverIP, serverPort, serverEndpoint) == true);
 
     	// Client connect to not existing server
@@ -79,12 +81,12 @@ namespace TestModbusTCP
     	CPUNIT_ASSERT(condition_.wait(3000) == true);
     	client.disconnect();
 
-    	CPUNIT_ASSERT(stateVec_[0] == ModbusTCPClientState::Connecting);
-    	CPUNIT_ASSERT(stateVec_[1] == ModbusTCPClientState::Close);
-    	CPUNIT_ASSERT(stateVec_[2] == ModbusTCPClientState::Connecting);
-    	CPUNIT_ASSERT(stateVec_[3] == ModbusTCPClientState::Close);
-    	CPUNIT_ASSERT(stateVec_[4] == ModbusTCPClientState::Connecting);
-    	CPUNIT_ASSERT(stateVec_[5] == ModbusTCPClientState::Close);
+    	CPUNIT_ASSERT(stateVec_[0] == TCPClientState::Connecting);
+    	CPUNIT_ASSERT(stateVec_[1] == TCPClientState::Close);
+    	CPUNIT_ASSERT(stateVec_[2] == TCPClientState::Connecting);
+    	CPUNIT_ASSERT(stateVec_[3] == TCPClientState::Close);
+    	CPUNIT_ASSERT(stateVec_[4] == TCPClientState::Connecting);
+    	CPUNIT_ASSERT(stateVec_[5] == TCPClientState::Close);
     }
 
     CPUNIT_TEST(TestModbusTCP, server_open_close)
@@ -92,11 +94,11 @@ namespace TestModbusTCP
     	asio::ip::tcp::endpoint serverEndpoint;
 
     	// Create server object
-    	ModbusTCPServer server;
+    	TCPServer server;
     	CPUNIT_ASSERT(server.getEndpoint(serverIP, serverPort, serverEndpoint) == true);
 
     	// Open server acceptor
-    	CPUNIT_ASSERT(server.open(serverEndpoint) == true);
+    	CPUNIT_ASSERT(server.open(serverEndpoint, acceptCallback) == true);
 
     	// Close server acceptor
     	server.close();

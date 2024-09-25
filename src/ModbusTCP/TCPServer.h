@@ -15,47 +15,43 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#ifndef __ModbusProt_ModbusTCPBase_h__
-#define __ModbusProt_ModbusTCPBase_h__
+#ifndef __ModbusProt_TCPServer_h__
+#define __ModbusProt_TCPServer_h__
 
-//#include <functional>
-#include <asio.hpp>
+#include <functional>
 
-#include "ModbusTCP/ModbusTCP.h"
+#include "ModbusTCP/TCPServerHandler.h"
+#include "ModbusTCP/TCPBase.h"
 
 namespace ModbusTCP
 {
 
-	class ModbusTCPBase
+	class TCPServer
+	: public TCPBase
 	{
 	  public:
-		ModbusTCPBase(
+		using AcceptCallback = std::function<TCPServerHandler::SPtr (asio::ip::tcp::socket client)>;
+
+		TCPServer(
 			asio::io_context& ctx
 		);
-		ModbusTCPBase(
+		TCPServer(
 			void
 		);
-		virtual ~ModbusTCPBase(
+		virtual ~TCPServer(
 			void
 		);
 
-		bool getEndpoint(
-			const std::string& ipAddress,
-			const std::string& port,
-			asio::ip::tcp::endpoint& endpoint
+		bool open(
+			asio::ip::tcp::endpoint listenEndpoint,
+			AcceptCallback acceptCallback
 		);
-
-	  protected:
-		asio::io_context ctx_;
-		asio::ip::tcp::socket socket_;
+		void close(void);
 
 	  private:
-		asio::io_context::work *work_ = nullptr;
-		bool useOwnThread_ = false;
-		std::thread thread_;
+	  	std::shared_ptr<asio::ip::tcp::acceptor> acceptor_ = nullptr;
 
-		void startThread(void);
-		void stopThread(void);
+	  	asio::awaitable<void> listen(void);
 	};
 
 }
