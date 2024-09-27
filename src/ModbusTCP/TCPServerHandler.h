@@ -19,6 +19,7 @@
 #define __ModbusProt_TCPServerHandler_h__
 
 #include <memory>
+#include <asio.hpp>
 
 namespace ModbusTCP
 {
@@ -35,7 +36,8 @@ namespace ModbusTCP
 			void
 		);
 
-	  private:
+		asio::awaitable<void> open(asio::ip::tcp::socket socket);
+		void close(void);
 	};
 
 }

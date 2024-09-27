@@ -32,7 +32,7 @@ namespace TestModbusTCP
 		}
 	}
 
-	TCPServerHandler::SPtr acceptCallback(asio::ip::tcp::socket client)
+	TCPServerHandler::SPtr acceptCallback(asio::ip::tcp::socket& client)
 	{
 		return nullptr;
 	}

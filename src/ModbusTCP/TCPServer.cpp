@@ -15,10 +15,17 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
+#include <asio/experimental/as_tuple.hpp>
+#include <asio/experimental/awaitable_operators.hpp>
+
 #include "ModbusTCP/TCPServer.h"
 
 namespace ModbusTCP
 {
+
+	using namespace asio::experimental::awaitable_operators;
+
+	constexpr auto use_nothrow_awaitable = asio::experimental::as_tuple(asio::use_awaitable);
 
 	TCPServer::TCPServer(
 		asio::io_context& ctx
@@ -60,7 +67,7 @@ namespace ModbusTCP
 		}
 
 		// Call listen function
-		co_spawn(ctx(), listen(), asio::detached);
+		co_spawn(ctx(), listen(acceptCallback), asio::detached);
 
 		return true;
 	}
@@ -81,14 +88,25 @@ namespace ModbusTCP
 	}
 
 	asio::awaitable<void>
-	TCPServer::listen(void)
+	TCPServer::listen(AcceptCallback acceptCallback)
 	{
 		std::cout << "TCPServer::listen" << std::endl;
 
 		for (;;) {
-			std::cout << "AA" << std::endl;
-			auto client = co_await acceptor_->async_accept(asio::use_awaitable);
-			std::cout << "BB" << std::endl;
+			// Listen to a new connection from the client
+			auto [e, client] = co_await acceptor_->async_accept(use_nothrow_awaitable);
+			if (e) {
+				co_return;
+			}
+
+			// Get handler form application
+			auto handler = acceptCallback(client);
+			if (handler == nullptr) {
+				continue;
+			}
+
+			// Handle client connection
+			co_spawn(ctx(), handler->open(std::move(client)), asio::detached);
 		}
 
 		co_return;

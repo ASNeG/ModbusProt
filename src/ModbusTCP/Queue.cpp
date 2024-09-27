@@ -15,45 +15,19 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#ifndef __ModbusProt_TCPServer_h__
-#define __ModbusProt_TCPServer_h__
-
-#include <functional>
-
-#include "ModbusTCP/TCPServerHandler.h"
-#include "ModbusTCP/TCPBase.h"
+#include "ModbusTCP/Queue.h"
 
 namespace ModbusTCP
 {
 
-	class TCPServer
-	: public TCPBase
+	Queue::Queue(
+		void
+	)
 	{
-	  public:
-		using AcceptCallback = std::function<TCPServerHandler::SPtr (asio::ip::tcp::socket& client)>;
+	}
 
-		TCPServer(
-			asio::io_context& ctx
-		);
-		TCPServer(
-			void
-		);
-		virtual ~TCPServer(
-			void
-		);
-
-		bool open(
-			asio::ip::tcp::endpoint listenEndpoint,
-			AcceptCallback acceptCallback
-		);
-		void close(void);
-
-	  private:
-	  	std::shared_ptr<asio::ip::tcp::acceptor> acceptor_ = nullptr;
-
-	  	asio::awaitable<void> listen(AcceptCallback acceptCallback);
-	};
+	Queue::~Queue(void)
+	{
+	}
 
 }
-
-#endif
