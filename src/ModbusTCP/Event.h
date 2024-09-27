@@ -18,6 +18,9 @@
 #ifndef __ModbusProt_Event_h__
 #define __ModbusProt_Event_h__
 
+#include <atomic>
+#include <coroutine>
+
 namespace ModbusTCP
 {
 
@@ -25,8 +28,35 @@ namespace ModbusTCP
 	{
 	  public:
 		Event(void) = default;
+
+		class Awaiter;
+		Awaiter operator co_await(void) const noexcept;
+
+		void notify(void) noexcept;
+
+	  private:
+
+		friend class Awaiter;
+
+		mutable std::atomic<void*> suspendedWaiter_ = nullptr;
+		mutable std::atomic<bool> notified_ = false;
 	};
 
+	class Event::Awaiter
+	{
+	  public:
+		Awaiter(const Event& event);
+
+		bool await_ready(void) const;
+		bool await_suspend(std::coroutine_handle<void> coroHandle) noexcept;
+		void await_resume(void) noexcept;
+
+	  private:
+		friend class Event;
+
+		const Event& event_;
+		std::coroutine_handle<> coroHandle_;
+	};
 }
 
 #endif
