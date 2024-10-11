@@ -29,3 +29,9 @@ add_library(
     STATIC 
     $<TARGET_OBJECTS:ModbusProt>
 )
+
+add_executable(
+    analyse 
+    ${CMAKE_CURRENT_LIST_DIR}/Analyse/main.cpp
+)
+
