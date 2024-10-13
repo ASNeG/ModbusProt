@@ -11,6 +11,7 @@ class CoroTask
 		int value_ = 0;
 		int result_ = 0;
 
+
 		auto yield_value(int value)
 		{
 			value_ = value;

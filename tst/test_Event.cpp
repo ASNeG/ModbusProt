@@ -30,9 +30,13 @@ namespace TestModbusTCP
 
     CPUNIT_TEST(TestModbusTCP, notify_event)
 	{
+    	std::cout << "notify - event" << std::endl;
+
     	Event event;
     	auto sendThread = std::thread([&event]{ event.notify(); });
+    	sleep(1);
     	auto recvThread = std::thread(receiver, std::ref(event));
+    	sleep(1);
 
     	std::cout << "SLEEP START" << std::endl;
     	sleep(1);
@@ -46,9 +50,12 @@ namespace TestModbusTCP
 
     CPUNIT_TEST(TestModbusTCP, event_notify)
 	{
+    	std::cout << "event-notify" << std::endl;
+
     	Event event;
     	auto recvThread = std::thread(receiver, std::ref(event));
 
+    	sleep(1);
     	std::cout << "SLEEP START" << std::endl;
     	sleep(1);
     	auto sendThread = std::thread([&event]{ event.notify(); });
