@@ -1,7 +1,9 @@
 
+#include <unistd.h>
 #include <iostream>
 #include <coroutine>
 #include "CoroTask.h"
+#include "Awaiter.h"
 
 CoroTask coro1(const int max)
 {
@@ -38,6 +40,18 @@ CoroTask coro3(const int max)
 
     std::cout << "coro end" << std::endl;
     co_return 4711;
+}
+
+CoroTask coro4(const int max)
+{
+    std::cout << "coro begin " << max << std::endl;
+
+    for (int val = 0; val <= max; val++) {
+    	std::cout << "coro " << val << "/" << max << std::endl;
+    	co_await Awaiter{};
+    }
+
+    std::cout << "coro end" << std::endl;
 }
 
 void test1(void)
@@ -77,6 +91,18 @@ void test4(void)
 	std::cout << "Result=" << coroTask.getResult() << std::endl;
 }
 
+void test5(void)
+{
+	auto coroTask = coro4(3);
+	std::cout << "started" << std::endl;
+
+	while (coroTask.resume()) {
+		std::cout << "suspended " << std::endl;
+	}
+
+	std::cout << "done" << std::endl;
+}
+
 
 int main(int argc, char** argv)
 {
@@ -91,6 +117,9 @@ int main(int argc, char** argv)
 
 	std::cout << std::endl << "TEST4:" << std::endl;
 	test4();
+
+	std::cout << std::endl << "TEST5:" << std::endl;
+	test5();
 
 	return 0;
 }
