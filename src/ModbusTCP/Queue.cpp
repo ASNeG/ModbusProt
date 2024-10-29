@@ -20,14 +20,66 @@
 namespace ModbusTCP
 {
 
+	QueueElement::QueueElement(
+		void
+	)
+	{
+	}
+
+	QueueElement::~QueueElement(
+		void
+	)
+	{
+	}
+
 	Queue::Queue(
 		void
 	)
 	{
 	}
 
-	Queue::~Queue(void)
+	Queue::~Queue(
+		void
+	)
 	{
+	}
+
+	EventTask
+	Queue::startHandler(Handler handler)
+	{
+		handlerRunning_ = true;
+		while (handlerRunning_) {
+			co_await event_;
+
+			if (!handlerRunning_) continue;
+
+			while (!queueElementList_.empty()) {
+				mutex_.lock();
+				auto queueElement = queueElementList_.front();
+				queueElementList_.pop_front();
+				mutex_.unlock();
+
+				handler(queueElement);
+			}
+		}
+	}
+
+	void
+	Queue::stopHandler(void)
+	{
+		handlerRunning_ = false;
+		event_.notify();
+	}
+
+	void
+	Queue::add(QueueElement::SPtr& queueElement)
+	{
+		std::lock_guard<std::mutex> guard(mutex_);
+		auto empty = queueElementList_.empty();
+		queueElementList_.push_back(queueElement);
+		if (empty) {
+			event_.notify();
+		}
 	}
 
 }

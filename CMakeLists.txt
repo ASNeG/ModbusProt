@@ -18,4 +18,3 @@ if (${PROJ_UNIT_TEST} STREQUAL "ON")
     include(tst/CMakeLists.txt)
 endif ()
 
-

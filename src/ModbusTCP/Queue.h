@@ -19,23 +19,45 @@
 #define __ModbusProt_Queue_h__
 
 #include <asio.hpp>
+#include <list>
 
+#include "ModbusTCP/Event.h"
 #include "ModbusTCP/ModbusTCP.h"
 
 namespace ModbusTCP
 {
 
+	class QueueElement
+	{
+	  public:
+		using SPtr = std::shared_ptr<QueueElement>;
+
+		QueueElement(void);
+		virtual ~QueueElement(void);
+	};
+
 	class Queue
 	{
 	  public:
+		using Handler = std::function<void (QueueElement::SPtr&)>;
+
 		Queue(
 			void
 		);
-		virtual ~Queue(
+		~Queue(
 			void
 		);
 
+		void add(QueueElement::SPtr& queueElement);
+		EventTask startHandler(Handler handler);
+		void stopHandler(void);
+
 	  private:
+		// Queue list
+		std::list<QueueElement::SPtr> queueElementList_;
+		std::mutex mutex_;
+		Event event_;
+		bool handlerRunning_ = false;
 	};
 
 }

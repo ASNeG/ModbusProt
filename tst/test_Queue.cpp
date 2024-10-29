@@ -3,7 +3,7 @@
 #include <thread>
 #include <iostream>
 
-#include "ModbusTCP/Event.h"
+#include "ModbusTCP/Queue.h"
 
 namespace TestModbusTCP
 {
@@ -18,6 +18,7 @@ namespace TestModbusTCP
 		eventReceived_ = true;
 	}
 
+#endif
     CPUNIT_TEST(TestModbusTCP, notify_event)
 	{
     	std::cout << "notify - event" << std::endl;
@@ -53,6 +54,7 @@ namespace TestModbusTCP
     	sendThread.join();
     	recvThread.join();
 	}
+#endif
 
 
 }
