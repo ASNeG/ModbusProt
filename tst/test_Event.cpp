@@ -5,7 +5,7 @@
 
 #include "ModbusTCP/Event.h"
 
-namespace TestModbusTCP
+namespace TestEvent
 {
 	using namespace cpunit;
 	using namespace ModbusTCP;
@@ -18,7 +18,7 @@ namespace TestModbusTCP
 		eventReceived_ = true;
 	}
 
-    CPUNIT_TEST(TestModbusTCP, notify_event)
+    CPUNIT_TEST(TestEvent, notify_event)
 	{
     	std::cout << "notify - event" << std::endl;
 
@@ -36,7 +36,7 @@ namespace TestModbusTCP
     	recvThread.join();
 	}
 
-    CPUNIT_TEST(TestModbusTCP, event_notify)
+    CPUNIT_TEST(TestEvent, event_notify)
 	{
     	std::cout << "event-notify" << std::endl;
 

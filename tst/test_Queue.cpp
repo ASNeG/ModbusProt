@@ -5,56 +5,47 @@
 
 #include "ModbusTCP/Queue.h"
 
-namespace TestModbusTCP
+namespace TestQueue
 {
 	using namespace cpunit;
 	using namespace ModbusTCP;
 
-	bool eventReceived_ = false;
-	EventTask receiver(Event& event)
+    CPUNIT_TEST(TestQueue, send_recv)
 	{
-		co_await event;
-		std::cout << "Got the notification! " << std::endl;
-		eventReceived_ = true;
+    	Queue queue;
+
+    	// Send
+    	for (uint32_t idx = 0; idx < 10; idx++) {
+    		auto queueElement = std::make_shared<QueueElement>();
+    		CPUNIT_ASSERT(queue.send(queueElement) == true);
+    	}
+
+    	// Receive
+    	for (uint32_t idx = 0; idx < 10; idx++) {
+    		queue.recv();
+    	}
 	}
 
-#endif
-    CPUNIT_TEST(TestModbusTCP, notify_event)
+    CPUNIT_TEST(TestQueue, recv_send)
 	{
-    	std::cout << "notify - event" << std::endl;
+    	Queue queue;
 
-    	Event event;
-    	auto sendThread = std::thread([&event]{ event.notify(); });
-    	auto recvThread = std::thread(receiver, std::ref(event));
+    	// Receive
+    	auto recvThread = std::thread(
+    		[&queue]() {
+    			for (uint32_t idx = 0; idx < 10; idx++) {
+    				queue.recv();
+    			}
+    		}
+    	);
 
-    	std::cout << "SLEEP START" << std::endl;
-    	sleep(1);
-    	std::cout << "SLEEP END" << std::endl;
+    	// Send
+    	for (uint32_t idx = 0; idx < 10; idx++) {
+    		auto queueElement = std::make_shared<QueueElement>();
+    		CPUNIT_ASSERT(queue.send(queueElement) == true);
+    	}
 
-    	CPUNIT_ASSERT(eventReceived_ == true);
-
-    	sendThread.join();
     	recvThread.join();
 	}
-
-    CPUNIT_TEST(TestModbusTCP, event_notify)
-	{
-    	std::cout << "event-notify" << std::endl;
-
-    	Event event;
-    	auto recvThread = std::thread(receiver, std::ref(event));
-
-    	std::cout << "SLEEP START" << std::endl;
-    	auto sendThread = std::thread([&event]{ event.notify(); });
-    	std::cout << "SLEEP END" << std::endl;
-    	sleep(1);
-
-    	CPUNIT_ASSERT(eventReceived_ == true);
-
-    	sendThread.join();
-    	recvThread.join();
-	}
-#endif
-
 
 }

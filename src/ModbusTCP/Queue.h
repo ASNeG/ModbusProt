@@ -39,8 +39,6 @@ namespace ModbusTCP
 	class Queue
 	{
 	  public:
-		using Handler = std::function<void (QueueElement::SPtr&)>;
-
 		Queue(
 			void
 		);
@@ -48,16 +46,14 @@ namespace ModbusTCP
 			void
 		);
 
-		void add(QueueElement::SPtr& queueElement);
-		EventTask startHandler(Handler handler);
-		void stopHandler(void);
+		bool send(QueueElement::SPtr& queueElement);
+		EventTask recv(void);
 
 	  private:
 		// Queue list
 		std::list<QueueElement::SPtr> queueElementList_;
 		std::mutex mutex_;
 		Event event_;
-		bool handlerRunning_ = false;
 	};
 
 }

@@ -44,35 +44,8 @@ namespace ModbusTCP
 	{
 	}
 
-	EventTask
-	Queue::startHandler(Handler handler)
-	{
-		handlerRunning_ = true;
-		while (handlerRunning_) {
-			co_await event_;
-
-			if (!handlerRunning_) continue;
-
-			while (!queueElementList_.empty()) {
-				mutex_.lock();
-				auto queueElement = queueElementList_.front();
-				queueElementList_.pop_front();
-				mutex_.unlock();
-
-				handler(queueElement);
-			}
-		}
-	}
-
-	void
-	Queue::stopHandler(void)
-	{
-		handlerRunning_ = false;
-		event_.notify();
-	}
-
-	void
-	Queue::add(QueueElement::SPtr& queueElement)
+	bool
+	Queue::send(QueueElement::SPtr& queueElement)
 	{
 		std::lock_guard<std::mutex> guard(mutex_);
 		auto empty = queueElementList_.empty();
@@ -80,6 +53,37 @@ namespace ModbusTCP
 		if (empty) {
 			event_.notify();
 		}
+
+		return true;
+	}
+
+	EventTask
+	Queue::recv(void)
+	{
+		// Check if element in queue list exist
+		if (!queueElementList_.empty()) {
+			// Get element from queue list
+			mutex_.lock();
+			auto queueElement = queueElementList_.front();
+			queueElementList_.pop_front();
+			mutex_.unlock();
+
+			co_return;
+		}
+
+		// No element in queue list - wait for new element
+		co_await event_;
+		if (queueElementList_.empty()) {
+			co_return;
+		}
+
+		// Get element from queue list
+		mutex_.lock();
+		auto queueElement = queueElementList_.front();
+		queueElementList_.pop_front();
+		mutex_.unlock();
+
+		co_return;
 	}
 
 }
