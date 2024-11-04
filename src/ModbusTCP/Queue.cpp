@@ -57,7 +57,7 @@ namespace ModbusTCP
 		return true;
 	}
 
-	EventTask
+	QueueEvent
 	Queue::recv(void)
 	{
 		// Check if element in queue list exist

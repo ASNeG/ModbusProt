@@ -4,6 +4,7 @@
 #include <iostream>
 
 #include "ModbusTCP/Event.h"
+#include "ModbusTCP/QueueEvent.h"
 
 namespace TestEvent
 {
@@ -11,7 +12,7 @@ namespace TestEvent
 	using namespace ModbusTCP;
 
 	bool eventReceived_ = false;
-	EventTask receiver(Event& event)
+	QueueEvent receiver(Event& event)
 	{
 		co_await event;
 		std::cout << "Got the notification! " << std::endl;
