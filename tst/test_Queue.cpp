@@ -22,10 +22,7 @@ namespace TestQueue
 
     	// Receive
     	for (uint32_t idx = 0; idx < 10; idx++) {
-    		auto queueEvent = queue.recv();
-    		//bool xyz = qe;
-    		//auto xyz = std::coroutine_handle<QueueEvent::promise_type>::from_promise(queueEvent);
-    		// std::cout  << "XXXXXXX " << qe.coroHandle_ << std::endl;
+    		queue.recv();
     	}
 	}
 

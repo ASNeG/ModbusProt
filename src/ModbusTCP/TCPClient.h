@@ -22,6 +22,7 @@
 #include <memory>
 
 #include "ModbusTCP/TCPBase.h"
+#include "ModbusTCP/Queue.h"
 
 namespace ModbusTCP
 {
@@ -63,6 +64,8 @@ namespace ModbusTCP
 		std::shared_ptr<asio::steady_timer> timer_ = nullptr;
 		TCPClientState state_ = TCPClientState::Init;
 		std::shared_ptr<asio::ip::tcp::socket> socket_ = nullptr;
+
+		Queue sendQueue_;
 
 		void createTimer(void);
 		void destroyTimer(void);

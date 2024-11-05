@@ -39,6 +39,8 @@ namespace ModbusTCP
 	class Queue
 	{
 	  public:
+		using QueueResult = std::tuple<bool, QueueElement::SPtr>;
+
 		Queue(
 			void
 		);
@@ -47,13 +49,15 @@ namespace ModbusTCP
 		);
 
 		bool send(QueueElement::SPtr& queueElement);
-		QueueEvent recv(void);
+		QueueResult recv(void);
 
 	  private:
 		// Queue list
 		std::list<QueueElement::SPtr> queueElementList_;
 		std::mutex mutex_;
 		Event event_;
+
+		QueueEvent waitForEvent(void);
 	};
 
 }

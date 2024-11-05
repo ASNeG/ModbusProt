@@ -58,6 +58,13 @@ namespace ModbusTCP
 	}
 
 	QueueEvent
+	Queue::waitForEvent(void)
+	{
+		co_await event_;
+		co_return;
+	}
+
+	Queue::QueueResult
 	Queue::recv(void)
 	{
 		// Check if element in queue list exist
@@ -67,14 +74,13 @@ namespace ModbusTCP
 			auto queueElement = queueElementList_.front();
 			queueElementList_.pop_front();
 			mutex_.unlock();
-
-			co_return;
+			return Queue::QueueResult{true, queueElement};
 		}
 
 		// No element in queue list - wait for new element
-		co_await event_;
+		waitForEvent();
 		if (queueElementList_.empty()) {
-			co_return;
+			return Queue::QueueResult{false, nullptr};
 		}
 
 		// Get element from queue list
@@ -82,8 +88,7 @@ namespace ModbusTCP
 		auto queueElement = queueElementList_.front();
 		queueElementList_.pop_front();
 		mutex_.unlock();
-
-		co_return;
+		return Queue::QueueResult{true, queueElement};
 	}
 
 }

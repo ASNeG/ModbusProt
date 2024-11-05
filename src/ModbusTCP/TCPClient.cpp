@@ -146,6 +146,12 @@ namespace ModbusTCP
 				}
 				continue;
 			}
+
+			// Read data from queue
+			auto [resultCode, queueElement] = sendQueue_.recv();
+			if (!resultCode) {
+				// FIXME: TODO
+			}
 		}
 
 		co_return;
