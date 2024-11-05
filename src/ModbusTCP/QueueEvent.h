@@ -18,6 +18,8 @@
 #ifndef __ModbusProt_QueueEvent_h__
 #define __ModbusProt_QueueEvent_h__
 
+#include <iostream>
+
 #include <atomic>
 #include <coroutine>
 
@@ -25,13 +27,34 @@ namespace ModbusTCP
 {
 
 	struct QueueEvent {
+
 		struct promise_type {
-			QueueEvent get_return_object() { return {}; }
-			std::suspend_never initial_suspend() { return {}; }
-			std::suspend_never final_suspend() noexcept { return {}; }
-			void return_void() {}
-			void unhandled_exception() {}
+
+			QueueEvent get_return_object(void)
+			{
+				// std::cout << "QueueEvent::get_return_object"  << std::endl;
+				return {};
+			}
+			std::suspend_never initial_suspend(void)
+			{
+				// std::cout << "QueueEvent::initial_suspend"  << std::endl;
+				return {};
+			}
+			std::suspend_never final_suspend(void) noexcept
+			{
+				// std::cout << "QueueEvent::final_suspend"  << std::endl;
+				return {};
+			}
+			void return_void(void)
+			{
+				// std::cout << "QueueEvent::return_void"  << std::endl;
+			}
+			void unhandled_exception(void)
+			{
+				// std::cout << "QueueEvent::unhandled_exception"  << std::endl;
+			}
 		};
+
 	};
 
 }

@@ -15,6 +15,8 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
+#include <iostream>
+
 #include "ModbusTCP/Event.h"
 
 namespace ModbusTCP
@@ -25,18 +27,23 @@ namespace ModbusTCP
 	)
 	: event_(event)
 	{
+		// std::cout << "Event::Awaiter::Awaiter" << std::endl;
 	}
 
 	bool
 	Event::Awaiter::await_ready(void) const
 	{
+		// std::cout  << "Event::Awaiter::await_ready" << std::endl;
+
 		// Allow at most one waiter
 		if (event_.suspendedWaiter_.load() != nullptr) {
 			throw std::runtime_error("More than one waiter is not valid");
 		}
 
 		// event.notified == false; suspends the coroutine
+		//					 Event::Awaiter::await_suspend
 		// event.notified == true; the coroutine is executed such as a usual function
+		//					 Event::Awaiter::await_resume
 		return event_.notified_;
 	}
 
@@ -45,6 +52,8 @@ namespace ModbusTCP
 		std::coroutine_handle<void> coroHandle
 	) noexcept
 	{
+		// std::cout << "Event::Awaiter::await_suspend" << std::endl;
+
 		coroHandle_ = coroHandle;
 
 		if (event_.notified_ == true) {
@@ -61,11 +70,14 @@ namespace ModbusTCP
 		void
 	) noexcept
 	{
+		// std::cout << "Event::Awaiter::await_resume" << std::endl;
 	}
 
 	void
 	Event::notify(void) noexcept
 	{
+		// std::cout << "Event::notify" << std::endl;
+
 		notified_ = true;
 
 		// try to load the waiter
@@ -73,17 +85,21 @@ namespace ModbusTCP
 
 	    // check if a waiter is available
 	    if (waiter != nullptr) {
-	        // resume the coroutine => await_resume
+	        // resume the coroutine => Event::Awaiter::await_resume
+	    	//
 	        waiter->coroHandle_.resume();
 	    }
 	}
 
 	Event::Awaiter Event::operator co_await(void) const noexcept
 	{
+		// std::cout << "Event::operator co_await"  << std::endl;
+
+		// Event::Awaiter::Awaiter
+		// Event::Awaiter::await_ready
+		// Event::Awaiter::await_suspend
+
 		return Event::Awaiter{*this};
 	}
-
-
-
 
 }
