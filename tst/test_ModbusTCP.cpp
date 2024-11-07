@@ -62,7 +62,7 @@ namespace TestModbusTCP
     	CPUNIT_ASSERT(condition_.wait(1000) == true);
     	CPUNIT_ASSERT(stateVec_[0] == TCPClientState::Connecting);
     	CPUNIT_ASSERT(stateVec_[1] == TCPClientState::Close);
-    	CPUNIT_ASSERT(stateVec_[2] == TCPClientState::Error);
+    	CPUNIT_ASSERT(stateVec_[2] == TCPClientState::Down);
     }
 
     CPUNIT_TEST(TestModbusTCP, client_not_con_retry)

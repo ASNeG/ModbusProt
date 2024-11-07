@@ -79,7 +79,6 @@ namespace ModbusProt
 		Error
 	};
 
-
 	class ModbusPDU {
 	  public:
 		using FuncCodeMap = std::map<PDUFunction, uint8_t>;

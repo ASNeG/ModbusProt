@@ -15,43 +15,21 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#ifndef __ModbusProt_Queue_h__
-#define __ModbusProt_Queue_h__
-
-#include <asio.hpp>
-#include <list>
-
-#include "ModbusTCP/Event.h"
-#include "ModbusTCP/QueueEvent.h"
 #include "ModbusTCP/QueueElement.h"
 
 namespace ModbusTCP
 {
 
-	class Queue
+	QueueElement::QueueElement(
+		void
+	)
 	{
-	  public:
-		using QueueResult = std::tuple<bool, QueueElement::SPtr>;
+	}
 
-		Queue(
-			void
-		);
-		~Queue(
-			void
-		);
-
-		bool send(QueueElement::SPtr& queueElement);
-		QueueResult recv(void);
-
-	  private:
-		// Queue list
-		std::list<QueueElement::SPtr> queueElementList_;
-		std::mutex mutex_;
-		Event event_;
-
-		QueueEvent waitForEvent(void);
-	};
+	QueueElement::~QueueElement(
+		void
+	)
+	{
+	}
 
 }
-
-#endif

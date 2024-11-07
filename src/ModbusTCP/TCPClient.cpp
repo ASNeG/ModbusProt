@@ -75,6 +75,8 @@ namespace ModbusTCP
 		timer_->expires_after(std::chrono::milliseconds(timeoutMs));
 		auto [e] = co_await timer_->async_wait(use_nothrow_awaitable);
 		if (e) {
+			state_ = TCPClientState::Error;
+			stateCallback_(state_);
 			co_return false;
 		}
 		co_return true;
@@ -86,6 +88,12 @@ namespace ModbusTCP
 		if (timer_ != nullptr) {
 			timer_->cancel();
 		}
+	}
+
+	void
+	TCPClient::stopSendQueue(void)
+	{
+		;
 	}
 
 	asio::awaitable<bool>
@@ -116,6 +124,28 @@ namespace ModbusTCP
 		co_return true;
 	}
 
+	void
+	TCPClient::shutdown(StateCallback stateCallback)
+	{
+		mutex_.lock();
+		clientLoopReady_ = false;
+		mutex_.unlock();
+
+		// Close socket
+		if (state_ == TCPClientState::Connected) {
+			socket_->close();
+			state_ = TCPClientState::Close;
+			stateCallback(state_);
+		}
+
+		// Cleanup send queue
+		// FIXME: TODO
+
+		// Set down state
+		state_ = TCPClientState::Down;
+		stateCallback(state_);
+	}
+
 	asio::awaitable<void>
 	TCPClient::clientLoop(
 		asio::ip::tcp::endpoint targetEndpoint,
@@ -124,8 +154,10 @@ namespace ModbusTCP
 	)
 	{
 		std::cout << "TCPClient::clientLoop" << std::endl;
-		loopReady_ = true;
-		while(loopReady_) {
+		clientLoopReady_ = true;
+		stateCallback_ = stateCallback;
+
+		while(clientLoopReady_) {
 			// Connect to server
 			auto rc = co_await connectToServer(
 				targetEndpoint,
@@ -133,24 +165,49 @@ namespace ModbusTCP
 				reconnectTimeout
 
 			);
-			if (!rc && reconnectTimeout == 0) {
-				// Set error state
-				state_ = TCPClientState::Error;
-				stateCallback(state_);
-				co_return;
-			}
-			if (!rc && loopReady_) {
+			if (!rc) {
+				// Check end condition
+				if (!clientLoopReady_ || reconnectTimeout == 0) {
+					shutdown(stateCallback);
+					co_return;
+				}
+
+				// Start reconnect timer
 				auto rc = co_await startTimer(reconnectTimeout);
 				if (!rc) {
+					shutdown(stateCallback);
 					co_return;
 				}
 				continue;
 			}
 
-			// Read data from queue
-			auto [resultCode, queueElement] = sendQueue_.recv();
-			if (!resultCode) {
-				// FIXME: TODO
+			bool recvLoopReady = true;
+			while (recvLoopReady) {
+				// Read data from queue
+				auto [resultCode, queueElement] = sendQueue_.recv();
+				if (!resultCode) {
+					// Only a disconnect call should cause this error
+					shutdown(stateCallback);
+					co_return;
+				}
+
+				// Encode data packet
+
+				// Send data packet to tcp server
+
+				// Receive data packet from tcp server
+
+				// Decode data packet
+			}
+
+			// Reconnect
+			if (clientLoopReady_) {
+				// Start reconnect timer
+				auto rc = co_await startTimer(reconnectTimeout);
+				if (!rc) {
+					shutdown(stateCallback);
+					co_return;
+				}
 			}
 		}
 
@@ -178,9 +235,36 @@ namespace ModbusTCP
 	TCPClient::disconnect(void)
 	{
 		std::cout << "TCPClient::disconnect" << std::endl;
-		loopReady_ = false;
+		mutex_.lock();
+		clientLoopReady_ = false;
+		mutex_.unlock();
+
+		// Close send queue
+		stopSendQueue();
+
+		// Close socket
 		socket_->close();
+
+		// Stop timer
 		stopTimer();
+	}
+
+	void
+	TCPClient::send(ModbusProt::ModbusPDU::SPtr& modbusPDU)
+	{
+		mutex_.lock();
+		if (!clientLoopReady_) {
+			// TCP client not ready
+			mutex_.unlock();
+
+			// FIXME :TODO
+			return;
+		}
+
+		// Add new packet to queue
+		// FIXME: TODO
+
+		mutex_.unlock();
 	}
 
 }

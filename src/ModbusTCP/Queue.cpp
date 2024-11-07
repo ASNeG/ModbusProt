@@ -20,18 +20,6 @@
 namespace ModbusTCP
 {
 
-	QueueElement::QueueElement(
-		void
-	)
-	{
-	}
-
-	QueueElement::~QueueElement(
-		void
-	)
-	{
-	}
-
 	Queue::Queue(
 		void
 	)

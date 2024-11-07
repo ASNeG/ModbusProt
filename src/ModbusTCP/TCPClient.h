@@ -23,17 +23,19 @@
 
 #include "ModbusTCP/TCPBase.h"
 #include "ModbusTCP/Queue.h"
+#include "ModbusProt/ModbusPDU.h"
 
 namespace ModbusTCP
 {
 
 	enum class TCPClientState
 	{
-		Init,
-		Connecting,
-		Connected,
-		Close,
-		Error
+		Init,			// The connection class was created
+		Connecting,		// The connection is currently being opened
+		Connected,		// The connection is open
+		Close,			// The connection was closed and a reconnect is performed
+		Error,			// The connection could not be open or an error has occurred
+		Down			// The connection is down. A connection can no longer be established
 	};
 
 	class TCPClient
@@ -41,6 +43,7 @@ namespace ModbusTCP
 	{
 	  public:
 		using StateCallback = std::function<void (TCPClientState)>;
+		using ResponseCallback = std::function<void (void)>;
 
 		TCPClient(
 			asio::io_context& ctx
@@ -58,15 +61,20 @@ namespace ModbusTCP
 			uint32_t reconnectTimeout = 0
 		);
 		void disconnect(void);
+		void send(ModbusProt::ModbusPDU::SPtr& modbusPDU);
 
 	  private:
-		bool loopReady_ = false;
+		std::mutex mutex_;
+		bool clientLoopReady_ = false;
 		std::shared_ptr<asio::steady_timer> timer_ = nullptr;
 		TCPClientState state_ = TCPClientState::Init;
 		std::shared_ptr<asio::ip::tcp::socket> socket_ = nullptr;
 
+		StateCallback stateCallback_;
 		Queue sendQueue_;
 
+		void shutdown(StateCallback stateCallback);
+		void stopSendQueue(void);
 		void createTimer(void);
 		void destroyTimer(void);
 		asio::awaitable<bool> startTimer(uint32_t timeoutMs);
