@@ -15,8 +15,8 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#ifndef __ModbusProt_Queue_h__
-#define __ModbusProt_Queue_h__
+#ifndef __Base_Queue_h__
+#define __Base_Queue_h__
 
 #include <asio.hpp>
 #include <list>
@@ -25,13 +25,13 @@
 #include "Base/QueueEvent.h"
 #include "Base/QueueElement.h"
 
-namespace ModbusTCP
+namespace Base
 {
 
 	class Queue
 	{
 	  public:
-		using QueueResult = std::tuple<bool, Base::QueueElement::SPtr>;
+		using QueueResult = std::tuple<bool, QueueElement::SPtr>;
 
 		Queue(
 			void
@@ -40,16 +40,16 @@ namespace ModbusTCP
 			void
 		);
 
-		bool send(Base::QueueElement::SPtr& queueElement);
+		bool send(QueueElement::SPtr& queueElement);
 		QueueResult recv(void);
 
 	  private:
 		// Queue list
-		std::list<Base::QueueElement::SPtr> queueElementList_;
+		std::list<QueueElement::SPtr> queueElementList_;
 		std::mutex mutex_;
-		Base::Event event_;
+		Event event_;
 
-		Base::QueueEvent waitForEvent(void);
+		QueueEvent waitForEvent(void);
 	};
 
 }

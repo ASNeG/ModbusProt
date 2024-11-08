@@ -21,8 +21,8 @@
 #include <functional>
 #include <memory>
 
+#include "Base/Queue.h"
 #include "ModbusTCP/TCPBase.h"
-#include "ModbusTCP/Queue.h"
 #include "ModbusProt/ModbusPDU.h"
 
 namespace ModbusTCP
@@ -71,7 +71,7 @@ namespace ModbusTCP
 		std::shared_ptr<asio::ip::tcp::socket> socket_ = nullptr;
 
 		StateCallback stateCallback_;
-		Queue sendQueue_;
+		Base::Queue sendQueue_;
 
 		void shutdown(StateCallback stateCallback);
 		void stopSendQueue(void);

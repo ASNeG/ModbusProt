@@ -15,9 +15,9 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#include "ModbusTCP/Queue.h"
+#include "Base/Queue.h"
 
-namespace ModbusTCP
+namespace Base
 {
 
 	Queue::Queue(
@@ -33,7 +33,7 @@ namespace ModbusTCP
 	}
 
 	bool
-	Queue::send(Base::QueueElement::SPtr& queueElement)
+	Queue::send(QueueElement::SPtr& queueElement)
 	{
 		std::lock_guard<std::mutex> guard(mutex_);
 		auto empty = queueElementList_.empty();
@@ -45,7 +45,7 @@ namespace ModbusTCP
 		return true;
 	}
 
-	Base::QueueEvent
+	QueueEvent
 	Queue::waitForEvent(void)
 	{
 		co_await event_;

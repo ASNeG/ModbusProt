@@ -3,12 +3,12 @@
 #include <thread>
 #include <iostream>
 
-#include "ModbusTCP/Queue.h"
+#include "Base/Queue.h"
 
 namespace TestQueue
 {
 	using namespace cpunit;
-	using namespace ModbusTCP;
+	using namespace Base;
 
     CPUNIT_TEST(TestQueue, send_recv)
 	{
@@ -16,7 +16,7 @@ namespace TestQueue
 
     	// Send
     	for (uint32_t idx = 0; idx < 10; idx++) {
-    		auto queueElement = std::make_shared<Base::QueueElement>();
+    		auto queueElement = std::make_shared<QueueElement>();
     		CPUNIT_ASSERT(queue.send(queueElement) == true);
     	}
 
@@ -41,7 +41,7 @@ namespace TestQueue
 
     	// Send
     	for (uint32_t idx = 0; idx < 10; idx++) {
-    		auto queueElement = std::make_shared<Base::QueueElement>();
+    		auto queueElement = std::make_shared<QueueElement>();
     		CPUNIT_ASSERT(queue.send(queueElement) == true);
     	}
 
