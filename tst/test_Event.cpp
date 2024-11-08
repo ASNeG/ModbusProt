@@ -4,14 +4,14 @@
 #include <iostream>
 
 #include "Base/Event.h"
-#include "ModbusTCP/QueueEvent.h"
+#include "Base/QueueEvent.h"
 
 namespace TestEvent
 {
 	using namespace cpunit;
 
 	bool eventReceived_ = false;
-	ModbusTCP::QueueEvent receiver(Base::Event& event)
+	Base::QueueEvent receiver(Base::Event& event)
 	{
 		std::cout << "receiver start" << std::endl;
 		co_await event;

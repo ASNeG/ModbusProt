@@ -45,7 +45,7 @@ namespace ModbusTCP
 		return true;
 	}
 
-	QueueEvent
+	Base::QueueEvent
 	Queue::waitForEvent(void)
 	{
 		co_await event_;

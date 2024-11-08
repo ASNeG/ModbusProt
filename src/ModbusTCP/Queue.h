@@ -22,7 +22,7 @@
 #include <list>
 
 #include "Base/Event.h"
-#include "ModbusTCP/QueueEvent.h"
+#include "Base/QueueEvent.h"
 #include "ModbusTCP/QueueElement.h"
 
 namespace ModbusTCP
@@ -49,7 +49,7 @@ namespace ModbusTCP
 		std::mutex mutex_;
 		Base::Event event_;
 
-		QueueEvent waitForEvent(void);
+		Base::QueueEvent waitForEvent(void);
 	};
 
 }

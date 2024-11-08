@@ -15,15 +15,15 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#ifndef __ModbusProt_QueueEvent_h__
-#define __ModbusProt_QueueEvent_h__
+#ifndef __Base_QueueEvent_h__
+#define __Base_QueueEvent_h__
 
 #include <iostream>
 
 #include <atomic>
 #include <coroutine>
 
-namespace ModbusTCP
+namespace Base
 {
 
 	struct QueueEvent {

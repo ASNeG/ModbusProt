@@ -15,8 +15,8 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#ifndef __ModbusProt_Event_h__
-#define __ModbusProt_Event_h__
+#ifndef __Base_Event_h__
+#define __Base_Event_h__
 
 #include <atomic>
 #include <coroutine>
