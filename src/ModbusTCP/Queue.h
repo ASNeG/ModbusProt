@@ -23,7 +23,7 @@
 
 #include "Base/Event.h"
 #include "Base/QueueEvent.h"
-#include "ModbusTCP/QueueElement.h"
+#include "Base/QueueElement.h"
 
 namespace ModbusTCP
 {
@@ -31,7 +31,7 @@ namespace ModbusTCP
 	class Queue
 	{
 	  public:
-		using QueueResult = std::tuple<bool, QueueElement::SPtr>;
+		using QueueResult = std::tuple<bool, Base::QueueElement::SPtr>;
 
 		Queue(
 			void
@@ -40,12 +40,12 @@ namespace ModbusTCP
 			void
 		);
 
-		bool send(QueueElement::SPtr& queueElement);
+		bool send(Base::QueueElement::SPtr& queueElement);
 		QueueResult recv(void);
 
 	  private:
 		// Queue list
-		std::list<QueueElement::SPtr> queueElementList_;
+		std::list<Base::QueueElement::SPtr> queueElementList_;
 		std::mutex mutex_;
 		Base::Event event_;
 

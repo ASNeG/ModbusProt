@@ -33,7 +33,7 @@ namespace ModbusTCP
 	}
 
 	bool
-	Queue::send(QueueElement::SPtr& queueElement)
+	Queue::send(Base::QueueElement::SPtr& queueElement)
 	{
 		std::lock_guard<std::mutex> guard(mutex_);
 		auto empty = queueElementList_.empty();

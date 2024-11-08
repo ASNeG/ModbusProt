@@ -15,9 +15,9 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#include "ModbusTCP/QueueElement.h"
+#include "Base/QueueElement.h"
 
-namespace ModbusTCP
+namespace Base
 {
 
 	QueueElement::QueueElement(

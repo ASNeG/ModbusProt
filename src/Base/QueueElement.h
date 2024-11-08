@@ -15,12 +15,12 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#ifndef __ModbusProt_QueueElement_h__
-#define __ModbusProt_QueueElement_h__
+#ifndef __Base_QueueElement_h__
+#define __Base_QueueElement_h__
 
 #include <memory>
 
-namespace ModbusTCP
+namespace Base
 {
 
 	class QueueElement
