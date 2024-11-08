@@ -24,6 +24,7 @@
 #include "Base/Queue.h"
 #include "ModbusTCP/TCPBase.h"
 #include "ModbusProt/ModbusPDU.h"
+#include "ModbusProt/ModbusCallback.h"
 
 namespace ModbusTCP
 {
@@ -43,7 +44,6 @@ namespace ModbusTCP
 	{
 	  public:
 		using StateCallback = std::function<void (TCPClientState)>;
-		using ResponseCallback = std::function<void (void)>;
 
 		TCPClient(
 			asio::io_context& ctx
@@ -61,7 +61,7 @@ namespace ModbusTCP
 			uint32_t reconnectTimeout = 0
 		);
 		void disconnect(void);
-		void send(ModbusProt::ModbusPDU::SPtr& modbusPDU);
+		void send(ModbusProt::ModbusPDU::SPtr& req, ModbusProt::ResponseCallback responseCallback);
 
 	  private:
 		std::mutex mutex_;

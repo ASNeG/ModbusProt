@@ -15,30 +15,23 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#ifndef __ModbusTCP_ModbusTCPQueueElement_h__
-#define __ModbusTCP_ModbusTCPQueueElement_h__
+#ifndef __ModbusProt_ModbusCallback_h__
+#define __ModbusProt_ModbusCallback_h__
 
 #include <functional>
 
-#include "Base/QueueElement.h"
-#include "ModbusProt/ModbusCallback.h"
+#include "ModbusProt/ModbusPDU.h"
 
-namespace ModbusTCP
+namespace ModbusProt
 {
 
-	class ModbusTCPQueueElement
-	: public Base::QueueElement
+	enum class ModbusError
 	{
-	  public:
-		using SPtr = std::shared_ptr<ModbusTCPQueueElement>;
-
-		ModbusTCPQueueElement(void);
-		~ModbusTCPQueueElement(void);
-
-		ModbusProt::ModbusPDU::SPtr req_;
-		ModbusProt::ModbusPDU::SPtr res_;
-		ModbusProt::ResponseCallback responseCallback_;
+		Ok,
+		ConnectionError
 	};
+
+	using ResponseCallback = std::function<void (ModbusError modbusError, ModbusPDU::SPtr& req, ModbusPDU::SPtr& res)>;
 
 }
 

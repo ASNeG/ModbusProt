@@ -18,6 +18,7 @@
 #include <asio/experimental/as_tuple.hpp>
 #include <asio/experimental/awaitable_operators.hpp>
 
+#include "ModbusTCP/ModbusTCPQueueElement.h"
 #include "ModbusTCP/TCPClient.h"
 
 namespace ModbusTCP
@@ -192,6 +193,9 @@ namespace ModbusTCP
 				}
 
 				// Encode data packet
+				auto qe = std::dynamic_pointer_cast<ModbusTCPQueueElement>(queueElement);
+				auto req = qe->req_;
+				auto res = qe->res_;
 
 				// Send data packet to tcp server
 
@@ -250,19 +254,25 @@ namespace ModbusTCP
 	}
 
 	void
-	TCPClient::send(ModbusProt::ModbusPDU::SPtr& modbusPDU)
+	TCPClient::send(ModbusProt::ModbusPDU::SPtr& req, ModbusProt::ResponseCallback responseCallback)
 	{
 		mutex_.lock();
 		if (!clientLoopReady_) {
 			// TCP client not ready
 			mutex_.unlock();
 
-			// FIXME :TODO
+			ModbusProt::ModbusPDU::SPtr res = nullptr;
+			responseCallback(ModbusProt::ModbusError::ConnectionError, req, res);
 			return;
 		}
 
 		// Add new packet to queue
-		// FIXME: TODO
+		auto qe = std::make_shared<ModbusTCPQueueElement>();
+		qe->req_ = req;
+		qe->res_ = nullptr;
+		qe->responseCallback_ = responseCallback;
+		Base::QueueElement::SPtr bqe = qe;
+		sendQueue_.send(bqe);
 
 		mutex_.unlock();
 	}
