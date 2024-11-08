@@ -15,8 +15,8 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#ifndef __ModbusProt_TCPClient_h__
-#define __ModbusProt_TCPClient_h__
+#ifndef __ModbusTCP_TCPClient_h__
+#define __ModbusTCP_TCPClient_h__
 
 #include <functional>
 #include <memory>

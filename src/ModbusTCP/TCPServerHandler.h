@@ -15,8 +15,8 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#ifndef __ModbusProt_TCPServerHandler_h__
-#define __ModbusProt_TCPServerHandler_h__
+#ifndef __ModbusTCP_TCPServerHandler_h__
+#define __ModbusTCP_TCPServerHandler_h__
 
 #include <memory>
 #include <asio.hpp>

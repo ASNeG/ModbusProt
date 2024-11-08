@@ -15,46 +15,24 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#ifndef __ModbusTCP_TCPBase_h__
-#define __ModbusTCP_TCPBase_h__
+#ifndef __ModbusTCP_ModbusTCPQueueElement_h__
+#define __ModbusTCP_ModbusTCPQueueElement_h__
 
-#include <asio.hpp>
-
-#include "ModbusTCP/ModbusTCP.h"
+#include "Base/QueueElement.h"
+#include "ModbusProt/ModbusPDU.h"
 
 namespace ModbusTCP
 {
 
-	class TCPBase
+	class ModbusTCPQueueElement
+	: public Base::QueueElement
 	{
 	  public:
-		TCPBase(
-			asio::io_context& ctx
-		);
-		TCPBase(
-			void
-		);
-		virtual ~TCPBase(
-			void
-		);
+		ModbusTCPQueueElement(void);
+		~ModbusTCPQueueElement(void);
 
-		asio::io_context& ctx(void);
-
-		bool getEndpoint(
-			const std::string& ipAddress,
-			const std::string& port,
-			asio::ip::tcp::endpoint& endpoint
-		);
-
-	  private:
-		asio::io_context ctx_;			// Internal context
-		asio::io_context& ctxRef_;		// Reference to internal or external context
-		asio::io_context::work *work_ = nullptr;
-		bool useOwnThread_ = false;
-		std::thread thread_;
-
-		void startThread(void);
-		void stopThread(void);
+		ModbusProt::ModbusPDU::SPtr req_;
+		ModbusProt::ModbusPDU::SPtr res_;
 	};
 
 }

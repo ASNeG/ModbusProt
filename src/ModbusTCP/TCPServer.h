@@ -15,8 +15,8 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#ifndef __ModbusProt_TCPServer_h__
-#define __ModbusProt_TCPServer_h__
+#ifndef __ModbusTCP_TCPServer_h__
+#define __ModbusTCP_TCPServer_h__
 
 #include <functional>
 

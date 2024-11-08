@@ -15,8 +15,8 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#ifndef __ModbusProt_ModbusTCP_h__
-#define __ModbusProt_ModbusTCP_h__
+#ifndef __ModbusTCP_ModbusTCP_h__
+#define __ModbusTCP_ModbusTCP_h__
 
 #include "ModbusProt/ModbusPDU.h"
 
