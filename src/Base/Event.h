@@ -21,7 +21,7 @@
 #include <atomic>
 #include <coroutine>
 
-namespace ModbusTCP
+namespace Base
 {
 
 	class Event

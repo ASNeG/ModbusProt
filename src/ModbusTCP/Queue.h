@@ -21,7 +21,7 @@
 #include <asio.hpp>
 #include <list>
 
-#include "ModbusTCP/Event.h"
+#include "Base/Event.h"
 #include "ModbusTCP/QueueEvent.h"
 #include "ModbusTCP/QueueElement.h"
 
@@ -47,7 +47,7 @@ namespace ModbusTCP
 		// Queue list
 		std::list<QueueElement::SPtr> queueElementList_;
 		std::mutex mutex_;
-		Event event_;
+		Base::Event event_;
 
 		QueueEvent waitForEvent(void);
 	};

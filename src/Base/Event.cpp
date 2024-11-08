@@ -17,9 +17,9 @@
 
 #include <iostream>
 
-#include "ModbusTCP/Event.h"
+#include "Base/Event.h"
 
-namespace ModbusTCP
+namespace Base
 {
 
 	Event::Awaiter::Awaiter(

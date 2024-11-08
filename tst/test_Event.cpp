@@ -3,16 +3,15 @@
 #include <thread>
 #include <iostream>
 
-#include "ModbusTCP/Event.h"
+#include "Base/Event.h"
 #include "ModbusTCP/QueueEvent.h"
 
 namespace TestEvent
 {
 	using namespace cpunit;
-	using namespace ModbusTCP;
 
 	bool eventReceived_ = false;
-	QueueEvent receiver(Event& event)
+	ModbusTCP::QueueEvent receiver(Base::Event& event)
 	{
 		std::cout << "receiver start" << std::endl;
 		co_await event;
@@ -28,7 +27,7 @@ namespace TestEvent
 	{
     	std::cout << "notify - event" << std::endl;
 
-    	Event event;
+    	Base::Event event;
     	auto sendThread = std::thread([&event]{ event.notify(); });
     	sleep(1);
     	auto recvThread = std::thread(receiver, std::ref(event));
@@ -44,7 +43,7 @@ namespace TestEvent
 	{
     	std::cout << "event-notify" << std::endl;
 
-    	Event event;
+    	Base::Event event;
     	auto recvThread = std::thread(receiver, std::ref(event));
     	sleep(1);
     	auto sendThread = std::thread([&event]{ event.notify(); });
