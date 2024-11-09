@@ -79,4 +79,17 @@ namespace Base
 		return Queue::QueueResult{true, queueElement};
 	}
 
+	QueueElement::SPtr
+	Queue::getAndRemoveFirst(void)
+	{
+		QueueElement::SPtr queueElement = nullptr;
+
+		if (queueElementList_.empty()) {
+			return queueElement;
+		}
+
+		queueElement = queueElementList_.front();
+		return queueElement;
+	}
+
 }

@@ -140,7 +140,11 @@ namespace ModbusTCP
 		}
 
 		// Cleanup send queue
-		// FIXME: TODO
+		Base::QueueElement::SPtr queueElement = nullptr;
+		while ((queueElement = sendQueue_.getAndRemoveFirst()) != nullptr) {
+			auto qe = std::dynamic_pointer_cast<ModbusTCPQueueElement>(queueElement);
+			qe->responseCallback_(ModbusProt::ModbusError::ConnectionError, qe->req_, qe->res_);
+		}
 
 		// Set down state
 		state_ = TCPClientState::Down;
@@ -196,12 +200,54 @@ namespace ModbusTCP
 				auto qe = std::dynamic_pointer_cast<ModbusTCPQueueElement>(queueElement);
 				auto req = qe->req_;
 				auto res = qe->res_;
+				auto responseCallback = qe->responseCallback_;
 
-				// Send data packet to tcp server
+				std::array<char, 512> sendBuffer;
+				std::stringstream ss1;
+				ss1.rdbuf()->pubsetbuf(sendBuffer.data(), sendBuffer.size());
+				if (!req->encode(ss1)) {
+					responseCallback(ModbusProt::ModbusError::EncodeDataError, req, res);
+					continue;
+				}
 
-				// Receive data packet from tcp server
+				// Send modbus pdu to tcp server
+				auto [e1, n1] = co_await async_write(*socket_, asio::buffer(sendBuffer, ss1.rdbuf()->in_avail()), use_nothrow_awaitable);
+				if (e1) {
+					recvLoopReady = false;
+
+					// Check end condition
+					if (!clientLoopReady_ || reconnectTimeout == 0) {
+						responseCallback(ModbusProt::ModbusError::ConnectionError, req, res);
+						shutdown(stateCallback);
+						co_return;
+					}
+					continue;
+				}
+
+				// Receive modbu pdu from tcp server
+				std::array<char, 512> recvBuffer;
+				auto [e2, n2] = co_await socket_->async_read_some(asio::buffer(recvBuffer), use_nothrow_awaitable);
+				if (e2) {
+					recvLoopReady = false;
+
+					// Check end condition
+					if (!clientLoopReady_ || reconnectTimeout == 0) {
+						responseCallback(ModbusProt::ModbusError::ConnectionError, req, res);
+						shutdown(stateCallback);
+						co_return;
+					}
+					continue;
+				}
 
 				// Decode data packet
+				std::stringstream ss2;
+				ss2.rdbuf()->pubsetbuf(recvBuffer.data(), recvBuffer.size());
+				if (!res->decode(ss2)) {
+					responseCallback(ModbusProt::ModbusError::EncodeDataError, req, res);
+					continue;
+				}
+
+				responseCallback(ModbusProt::ModbusError::Ok, req, res);
 			}
 
 			// Reconnect

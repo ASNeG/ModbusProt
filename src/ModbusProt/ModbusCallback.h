@@ -28,7 +28,9 @@ namespace ModbusProt
 	enum class ModbusError
 	{
 		Ok,
-		ConnectionError
+		ConnectionError,
+		EncodeDataError,
+		DecodeDataError
 	};
 
 	using ResponseCallback = std::function<void (ModbusError modbusError, ModbusPDU::SPtr& req, ModbusPDU::SPtr& res)>;

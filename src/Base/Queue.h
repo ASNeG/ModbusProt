@@ -42,6 +42,7 @@ namespace Base
 
 		bool send(QueueElement::SPtr& queueElement);
 		QueueResult recv(void);
+		QueueElement::SPtr getAndRemoveFirst(void);
 
 	  private:
 		// Queue list
