@@ -35,6 +35,7 @@ namespace ModbusTCP
 		ModbusTCPQueueElement(void);
 		~ModbusTCPQueueElement(void);
 
+		uint8_t address_ = 0x00;
 		ModbusProt::ModbusPDU::SPtr req_;
 		ModbusProt::ModbusPDU::SPtr res_;
 		ModbusProt::ResponseCallback responseCallback_;

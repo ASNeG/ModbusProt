@@ -187,6 +187,7 @@ namespace ModbusTCP
 			}
 
 			bool recvLoopReady = true;
+			uint16_t transactionIdentifier = 1;
 			while (recvLoopReady) {
 				// Read data from queue
 				auto [resultCode, queueElement] = sendQueue_.recv();
@@ -198,6 +199,7 @@ namespace ModbusTCP
 
 				// Encode data packet
 				auto qe = std::dynamic_pointer_cast<ModbusTCPQueueElement>(queueElement);
+				auto address = qe->address_;
 				auto req = qe->req_;
 				auto res = qe->res_;
 				auto responseCallback = qe->responseCallback_;
@@ -205,7 +207,13 @@ namespace ModbusTCP
 				std::array<char, 512> sendBuffer;
 				std::stringstream ss1;
 				ss1.rdbuf()->pubsetbuf(sendBuffer.data(), sendBuffer.size());
-				if (!req->encode(ss1)) {
+
+				ModbusTCP modbusTCPReq;
+				modbusTCPReq.modbusPDU(req);
+				modbusTCPReq.transactionIdentifier(transactionIdentifier);
+				modbusTCPReq.unitIdentifier(address);
+
+				if (!modbusTCPReq.encode(ss1)) {
 					responseCallback(ModbusProt::ModbusError::EncodeDataError, req, res);
 					continue;
 				}
@@ -225,6 +233,7 @@ namespace ModbusTCP
 				}
 
 				// Receive modbu pdu from tcp server
+				// FIXME: Timeout handling is missing
 				std::array<char, 512> recvBuffer;
 				auto [e2, n2] = co_await socket_->async_read_some(asio::buffer(recvBuffer), use_nothrow_awaitable);
 				if (e2) {
@@ -240,12 +249,21 @@ namespace ModbusTCP
 				}
 
 				// Decode data packet
+				ModbusTCP modbusTCPRes;
 				std::stringstream ss2;
 				ss2.rdbuf()->pubsetbuf(recvBuffer.data(), recvBuffer.size());
-				if (!res->decode(ss2)) {
-					responseCallback(ModbusProt::ModbusError::EncodeDataError, req, res);
+				if (!modbusTCPRes.decode(ss2)) {
+					recvLoopReady = false;
+
+					// Check end condition
+					if (!clientLoopReady_ || reconnectTimeout == 0) {
+						responseCallback(ModbusProt::ModbusError::DecodeDataError, req, res);
+						shutdown(stateCallback);
+						co_return;
+					}
 					continue;
 				}
+				res = modbusTCPRes.modbusPDU();
 
 				responseCallback(ModbusProt::ModbusError::Ok, req, res);
 			}
@@ -300,7 +318,11 @@ namespace ModbusTCP
 	}
 
 	void
-	TCPClient::send(ModbusProt::ModbusPDU::SPtr& req, ModbusProt::ResponseCallback responseCallback)
+	TCPClient::send(
+		uint8_t address,
+		ModbusProt::ModbusPDU::SPtr& req,
+		ModbusProt::ResponseCallback responseCallback
+	)
 	{
 		mutex_.lock();
 		if (!clientLoopReady_) {
@@ -314,6 +336,7 @@ namespace ModbusTCP
 
 		// Add new packet to queue
 		auto qe = std::make_shared<ModbusTCPQueueElement>();
+		qe->address_ = address;
 		qe->req_ = req;
 		qe->res_ = nullptr;
 		qe->responseCallback_ = responseCallback;

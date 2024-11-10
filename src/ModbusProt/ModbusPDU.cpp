@@ -49,8 +49,8 @@ namespace ModbusProt
 	ModbusPDU::encode(std::ostream& os) const
 	{
 		// Get function code
-		auto it = funcCodeMap_.find(pduFunction_);
-		if (it == funcCodeMap_.end()) return false;
+		auto it = ModbusProt::funcCodeMap_.find(pduFunction_);
+		if (it == ModbusProt::funcCodeMap_.end()) return false;
 		uint8_t pduFunction = it->second;
 		if (pduType_ == PDUType::Error) {
 			pduFunction += 0x80;
@@ -63,7 +63,6 @@ namespace ModbusProt
 		catch (std::ostream::failure e) {
 			return false;
 		}
-
 		return true;
 	}
 
@@ -86,7 +85,7 @@ namespace ModbusProt
 		}
 
 		// Find function code
-		for (auto it: funcCodeMap_) {
+		for (auto it: ModbusProt::funcCodeMap_) {
 			if (it.second == funcCode) {
 				pduFunction_ = it.first;
 				return true;

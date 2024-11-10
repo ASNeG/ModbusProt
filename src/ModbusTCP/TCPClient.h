@@ -61,7 +61,11 @@ namespace ModbusTCP
 			uint32_t reconnectTimeout = 0
 		);
 		void disconnect(void);
-		void send(ModbusProt::ModbusPDU::SPtr& req, ModbusProt::ResponseCallback responseCallback);
+		void send(
+			uint8_t address,
+			ModbusProt::ModbusPDU::SPtr& req,
+			ModbusProt::ResponseCallback responseCallback
+		);
 
 	  private:
 		std::mutex mutex_;
