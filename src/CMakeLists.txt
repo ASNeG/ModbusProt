@@ -36,3 +36,8 @@ add_executable(
     ${CMAKE_CURRENT_LIST_DIR}/Analyse/main.cpp
 )
 
+add_executable(
+    channel 
+    ${CMAKE_CURRENT_LIST_DIR}/Analyse/Channel.cpp
+)
+
