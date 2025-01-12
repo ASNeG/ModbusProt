@@ -39,6 +39,7 @@ namespace Base
 		auto empty = queueElementList_.empty();
 		queueElementList_.push_back(queueElement);
 		if (empty) {
+			std::cout << "SEND QUEUE" << std::endl;
 			event_.notify();
 		}
 
@@ -48,7 +49,9 @@ namespace Base
 	QueueEvent
 	Queue::waitForEvent(void)
 	{
+		std::cout << "RECV QUEUE 1" << std::endl;
 		co_await event_;
+		std::cout << "RECV QUEUE 2" << std::endl;
 		co_return;
 	}
 
@@ -67,6 +70,7 @@ namespace Base
 
 		// No element in queue list - wait for new element
 		waitForEvent();
+		std::cout << "waitForEvent end..." << std::endl;
 		if (queueElementList_.empty()) {
 			return Queue::QueueResult{false, nullptr};
 		}

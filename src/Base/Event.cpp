@@ -27,13 +27,13 @@ namespace Base
 	)
 	: event_(event)
 	{
-		// std::cout << "Event::Awaiter::Awaiter" << std::endl;
+		 std::cout << "Event::Awaiter::Awaiter" << std::endl;
 	}
 
 	bool
 	Event::Awaiter::await_ready(void) const
 	{
-		// std::cout  << "Event::Awaiter::await_ready" << std::endl;
+		 std::cout  << "Event::Awaiter::await_ready" << std::endl;
 
 		// Allow at most one waiter
 		if (event_.suspendedWaiter_.load() != nullptr) {
@@ -52,7 +52,7 @@ namespace Base
 		std::coroutine_handle<void> coroHandle
 	) noexcept
 	{
-		// std::cout << "Event::Awaiter::await_suspend" << std::endl;
+		 std::cout << "Event::Awaiter::await_suspend" << std::endl;
 
 		coroHandle_ = coroHandle;
 
@@ -70,13 +70,13 @@ namespace Base
 		void
 	) noexcept
 	{
-		// std::cout << "Event::Awaiter::await_resume" << std::endl;
+		 std::cout << "Event::Awaiter::await_resume" << std::endl;
 	}
 
 	void
 	Event::notify(void) noexcept
 	{
-		// std::cout << "Event::notify" << std::endl;
+		 std::cout << "Event::notify" << std::endl;
 
 		notified_ = true;
 
@@ -93,7 +93,7 @@ namespace Base
 
 	Event::Awaiter Event::operator co_await(void) const noexcept
 	{
-		// std::cout << "Event::operator co_await"  << std::endl;
+		 std::cout << "Event::operator co_await"  << std::endl;
 
 		// Event::Awaiter::Awaiter
 		// Event::Awaiter::await_ready

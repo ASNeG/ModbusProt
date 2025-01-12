@@ -1,5 +1,5 @@
 /*
-   Copyright 2024 Kai Huebl (kai@huebl-sgh.de)
+   Copyright 2024-2025 Kai Huebl (kai@huebl-sgh.de)
 
    Lizenziert gemäß Apache Licence Version 2.0 (die „Lizenz“); Nutzung dieser
    Datei nur in Übereinstimmung mit der Lizenz erlaubt.
@@ -20,20 +20,25 @@
 
 #include <functional>
 #include <memory>
+#include <asio/experimental/channel.hpp>
 
 #include "Base/Queue.h"
-#include "ModbusTCP/TCPBase.h"
 #include "ModbusProt/ModbusPDU.h"
 #include "ModbusProt/ModbusCallback.h"
+#include "ModbusTCP/TCPBase.h"
+#include "ModbusTCP/ModbusTCPQueueElement.h"
 
 namespace ModbusTCP
 {
 
 	enum class TCPClientState
 	{
-		Init,			// The connection class was created
-		Connecting,		// The connection is currently being opened
-		Connected,		// The connection is open
+		Init,				// The connection class was created
+		Connecting,			// The connection is currently being opened
+		Connected,			// The connection is open
+		WaitForReconnect,	// ...
+
+
 		Close,			// The connection was closed and a reconnect is performed
 		Error,			// The connection could not be open or an error has occurred
 		Down			// The connection is down. A connection can no longer be established
@@ -43,6 +48,7 @@ namespace ModbusTCP
 	: public TCPBase
 	{
 	  public:
+		using ClientChannel = asio::experimental::channel<void(asio::error_code, ModbusTCPQueueElement::SPtr)>;
 		using StateCallback = std::function<void (TCPClientState)>;
 
 		TCPClient(
@@ -55,10 +61,14 @@ namespace ModbusTCP
 			void
 		);
 
+		void connectTimeout(uint32_t connectTimeout);
+		void reconnectTimeout(uint32_t reconnectTimeout);
+		void sendTimeout(uint32_t sendTimeout);
+		void recvTimeout(uint32_t recvTimeout);
+
 		void connect(
 			asio::ip::tcp::endpoint target,
-			StateCallback stateCallback,
-			uint32_t reconnectTimeout = 0
+			StateCallback stateCallback
 		);
 		void disconnect(void);
 		void send(
@@ -68,31 +78,51 @@ namespace ModbusTCP
 		);
 
 	  private:
+		uint32_t connectTimeout_ = 1000; 		/* 1000 milliseconds */
+		uint32_t reconnectTimeout_ = 0;			/* 0 milliseconds */
+		uint32_t sendTimeout_ = 1000;			/* 1000 milliseconds */
+		uint32_t recvTimeout_ = 3000;			/* 3000 milliseconds */
+
 		std::mutex mutex_;
 		bool clientLoopReady_ = false;
-		std::shared_ptr<asio::steady_timer> timer_ = nullptr;
-		TCPClientState state_ = TCPClientState::Init;
+		TCPClientState tcpClientState_ = TCPClientState::Init;
 		std::shared_ptr<asio::ip::tcp::socket> socket_ = nullptr;
 
 		StateCallback stateCallback_;
-		Base::Queue sendQueue_;
+		ClientChannel channel_;
 
 		void shutdown(StateCallback stateCallback);
 		void stopSendQueue(void);
-		void createTimer(void);
-		void destroyTimer(void);
-		asio::awaitable<bool> startTimer(uint32_t timeoutMs);
-		void stopTimer(void);
+		void setState(TCPClientState tcpClientState);
 
+		asio::awaitable<void> timeout(
+			std::chrono::steady_clock::duration duration
+		);
 		asio::awaitable<bool> connectToServer(
-			asio::ip::tcp::endpoint targetEndpoint,
-			StateCallback stateCallback,
-			uint32_t reconnectTimeout
+			asio::ip::tcp::endpoint targetEndpoint
+		);
+		asio::awaitable<bool> sendToServer(
+			std::array<char, 512>& sendBuffer,
+			uint32_t sendBufferLen
+		);
+		asio::awaitable<bool> recvFromServer(
+			std::array<char, 512>& recvBuffer,
+			uint32_t* recvBufferLen
 		);
 		asio::awaitable<void> clientLoop(
-			asio::ip::tcp::endpoint targetEndpoint,
-			StateCallback stateCallback,
-			uint32_t reconnectTimeout
+			asio::ip::tcp::endpoint targetEndpoint
+		);
+
+		bool encode(
+			ModbusTCPQueueElement::SPtr& queueElement,
+			uint16_t transactionIdentifier,
+			std::array<char, 512>& sendBuffer,
+			uint32_t* sendBufferLen
+		);
+		bool decode(
+			ModbusTCPQueueElement::SPtr& queueElement,
+			std::array<char, 512>& recvBuffer,
+			uint32_t recvBufferLen
 		);
 	};
 

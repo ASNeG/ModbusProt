@@ -14,7 +14,7 @@ namespace TestModbusTCP
 	using namespace Test;
 
 	const std::string serverIP = "127.0.0.1";
-	const std::string serverPort = "1234";
+	const std::string serverPort1 = "1234";
 
 	Condition condition_;
 	uint32_t numberStates_ = 0;
@@ -43,7 +43,7 @@ namespace TestModbusTCP
 
     	// Create tcp base object
     	TCPBase tcpBase;
-    	CPUNIT_ASSERT(tcpBase.getEndpoint(serverIP, serverPort, serverEndpoint) == true);
+    	CPUNIT_ASSERT(tcpBase.getEndpoint(serverIP, serverPort1, serverEndpoint) == true);
 	}
 
     CPUNIT_TEST(TestModbusTCP, client_not_con_not_retry)
@@ -52,17 +52,16 @@ namespace TestModbusTCP
 
     	// Create client object
     	TCPClient client;
-    	CPUNIT_ASSERT(client.getEndpoint(serverIP, serverPort, serverEndpoint) == true);
+    	CPUNIT_ASSERT(client.getEndpoint(serverIP, serverPort1, serverEndpoint) == true);
 
     	// Client connect to not existing server
     	stateVec_.clear();
-    	numberStates_ = 3;
+    	numberStates_ = 2;
     	condition_.init();
-    	client.connect(serverEndpoint, connectionStateCallback, 0);
+    	client.connect(serverEndpoint, connectionStateCallback);
     	CPUNIT_ASSERT(condition_.wait(1000) == true);
     	CPUNIT_ASSERT(stateVec_[0] == TCPClientState::Connecting);
     	CPUNIT_ASSERT(stateVec_[1] == TCPClientState::Close);
-    	CPUNIT_ASSERT(stateVec_[2] == TCPClientState::Down);
     }
 
     CPUNIT_TEST(TestModbusTCP, client_not_con_retry)
@@ -71,13 +70,14 @@ namespace TestModbusTCP
 
     	// Create client object
     	TCPClient client;
-    	CPUNIT_ASSERT(client.getEndpoint(serverIP, serverPort, serverEndpoint) == true);
+    	CPUNIT_ASSERT(client.getEndpoint(serverIP, serverPort1, serverEndpoint) == true);
 
     	// Client connect to not existing server
     	stateVec_.clear();
     	numberStates_ = 6;
     	condition_.init();
-    	client.connect(serverEndpoint, connectionStateCallback, 200);
+    	client.reconnectTimeout(200);
+    	client.connect(serverEndpoint, connectionStateCallback);
     	CPUNIT_ASSERT(condition_.wait(3000) == true);
     	client.disconnect();
 
@@ -95,7 +95,7 @@ namespace TestModbusTCP
 
     	// Create server object
     	TCPServer server;
-    	CPUNIT_ASSERT(server.getEndpoint(serverIP, serverPort, serverEndpoint) == true);
+    	CPUNIT_ASSERT(server.getEndpoint(serverIP, serverPort1, serverEndpoint) == true);
 
     	// Open server acceptor
     	CPUNIT_ASSERT(server.open(serverEndpoint, acceptCallback) == true);

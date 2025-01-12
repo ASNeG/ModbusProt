@@ -13,11 +13,10 @@ namespace TestEvent
 	bool eventReceived_ = false;
 	Base::QueueEvent receiver(Base::Event& event)
 	{
-		std::cout << "receiver start" << std::endl;
+		std::cout << "wait event" << std::endl;
 		co_await event;
-		std::cout << "Got the notification! " << std::endl;
+		std::cout << "wait event ready" << std::endl;
 		eventReceived_ = true;
-		std::cout << "receiver end" << std::endl;
 
 		// QueueEvent::return_void
 		// QueueEvent::final_suspend
@@ -29,8 +28,10 @@ namespace TestEvent
 
     	Base::Event event;
     	auto sendThread = std::thread([&event]{ event.notify(); });
+    	std::cout << "sleep" << std::endl;
     	sleep(1);
     	auto recvThread = std::thread(receiver, std::ref(event));
+    	std::cout << "sleep" << std::endl;
     	sleep(1);
 
     	CPUNIT_ASSERT(eventReceived_ == true);
@@ -45,8 +46,10 @@ namespace TestEvent
 
     	Base::Event event;
     	auto recvThread = std::thread(receiver, std::ref(event));
+    	std::cout << "sleep" << std::endl;
     	sleep(1);
     	auto sendThread = std::thread([&event]{ event.notify(); });
+    	std::cout << "sleep" << std::endl;
     	sleep(1);
 
     	CPUNIT_ASSERT(eventReceived_ == true);

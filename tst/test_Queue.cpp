@@ -20,6 +20,8 @@ namespace TestQueue
     		CPUNIT_ASSERT(queue.send(queueElement) == true);
     	}
 
+    	sleep(1);
+
     	// Receive
     	for (uint32_t idx = 0; idx < 10; idx++) {
     		queue.recv();
@@ -38,6 +40,8 @@ namespace TestQueue
     			}
     		}
     	);
+
+    	sleep(1);
 
     	// Send
     	for (uint32_t idx = 0; idx < 10; idx++) {

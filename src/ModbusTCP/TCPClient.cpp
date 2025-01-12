@@ -1,5 +1,5 @@
 /*
-   Copyright 2024 Kai Huebl (kai@huebl-sgh.de)
+   Copyright 2024-2025 Kai Huebl (kai@huebl-sgh.de)
 
    Lizenziert gemäß Apache Licence Version 2.0 (die „Lizenz“); Nutzung dieser
    Datei nur in Übereinstimmung mit der Lizenz erlaubt.
@@ -18,7 +18,6 @@
 #include <asio/experimental/as_tuple.hpp>
 #include <asio/experimental/awaitable_operators.hpp>
 
-#include "ModbusTCP/ModbusTCPQueueElement.h"
 #include "ModbusTCP/TCPClient.h"
 
 namespace ModbusTCP
@@ -32,63 +31,66 @@ namespace ModbusTCP
 		asio::io_context& ctx
 	)
 	: TCPBase(ctx)
+	, channel_(ctx, 10)
 	{
 		socket_ = std::make_shared<asio::ip::tcp::socket>(TCPBase::ctx());
-		createTimer();
 	}
 
 	TCPClient::TCPClient(
 		void
 	)
 	: TCPBase()
+	, channel_(ctx(), 10)
 	{
 		socket_ = std::make_shared<asio::ip::tcp::socket>(ctx());
-		createTimer();
 	}
 
 	TCPClient::~TCPClient(
 		void
 	)
 	{
-		// Stop Timer
-		stopTimer();
-		destroyTimer();
-
 		// Delete socket
 		socket_ = nullptr;
 	}
 
 	void
-	TCPClient::createTimer(void)
+	TCPClient::connectTimeout(uint32_t connectTimeout)
 	{
-		timer_ = std::make_shared<asio::steady_timer>(ctx());
+		connectTimeout_ = connectTimeout;
 	}
 
 	void
-	TCPClient::destroyTimer(void)
+	TCPClient::reconnectTimeout(uint32_t reconnectTimeout)
 	{
-		timer_ = nullptr;
-	}
-
-	asio::awaitable<bool>
-	TCPClient::startTimer(uint32_t timeoutMs)
-	{
-		timer_->expires_after(std::chrono::milliseconds(timeoutMs));
-		auto [e] = co_await timer_->async_wait(use_nothrow_awaitable);
-		if (e) {
-			state_ = TCPClientState::Error;
-			stateCallback_(state_);
-			co_return false;
-		}
-		co_return true;
+		reconnectTimeout_ = reconnectTimeout;
 	}
 
 	void
-	TCPClient::stopTimer(void)
+	TCPClient::sendTimeout(uint32_t sendTimeout)
 	{
-		if (timer_ != nullptr) {
-			timer_->cancel();
-		}
+		sendTimeout_ = sendTimeout;
+	}
+
+	void
+	TCPClient::recvTimeout(uint32_t recvTimeout)
+	{
+		recvTimeout_ = recvTimeout;
+	}
+
+	void
+	TCPClient::setState(TCPClientState tcpClientState)
+	{
+		std::lock_guard<std::mutex> guard(mutex_);
+		tcpClientState_= tcpClientState;
+		stateCallback_(tcpClientState_);
+	}
+
+	asio::awaitable<void>
+	TCPClient::timeout(std::chrono::steady_clock::duration duration)
+	{
+		asio::steady_timer timer(co_await asio::this_coro::executor);
+		timer.expires_after(duration);
+		co_await timer.async_wait(use_nothrow_awaitable);
 	}
 
 	void
@@ -99,44 +101,134 @@ namespace ModbusTCP
 
 	asio::awaitable<bool>
 	TCPClient::connectToServer(
-		asio::ip::tcp::endpoint targetEndpoint,
-		StateCallback stateCallback,
-		uint32_t reconnectTimeout
+		asio::ip::tcp::endpoint targetEndpoint
 	)
 	{
 		std::cout << "TCPClient::connectToServer" << std::endl;
 
-		// Set connecting state
-		state_ = TCPClientState::Connecting;
-		stateCallback(state_);
+		while (true) {
+			// Set connecting state
+			setState(TCPClientState::Connecting);
 
-		// Connect to server
-		auto [e] = co_await socket_->async_connect(targetEndpoint, use_nothrow_awaitable);
-		if (e) {
-			// Set close state
-			state_ = TCPClientState::Close;
-			stateCallback(state_);
-			co_return false;
+			// Connect tcp connection to server
+			auto result = co_await(
+				socket_->async_connect(targetEndpoint, use_nothrow_awaitable) ||
+				timeout(std::chrono::milliseconds(connectTimeout_))
+			);
+
+			bool error = false;
+			if (result.index() == 1) {
+				// timed out
+				error = true;
+			}
+			else {
+				auto [e] = std::get<0>(result);
+				if (e) {
+					// Connect error
+					error = true;
+				}
+			}
+
+			if (error) {
+				if (reconnectTimeout_ == 0) {
+					// Set close state
+					setState(TCPClientState::Close);
+					co_return false;
+				}
+
+				// Start reconnect timer
+				setState(TCPClientState::WaitForReconnect);
+				co_await timeout(std::chrono::milliseconds(reconnectTimeout_));
+				continue;
+			}
+			break;
 		}
 
 		// Set connected state
-		state_ = TCPClientState::Connected;
-		stateCallback(state_);
+		setState(TCPClientState::Connected);
+		co_return true;
+	}
+
+	asio::awaitable<bool>
+	TCPClient::sendToServer(
+		std::array<char, 512>& sendBuffer,
+		uint32_t sendBufferLen
+	)
+	{
+		// Send modbus pdu to server
+		auto result = co_await(
+			async_write(*socket_, asio::buffer(sendBuffer, sendBufferLen), use_nothrow_awaitable) ||
+			timeout(std::chrono::milliseconds(sendTimeout_))
+		);
+
+		bool error = false;
+		if (result.index() == 1) {
+			// timed out
+			error = true;
+		}
+		else {
+			auto [e, n] = std::get<0>(result);
+			if (e) {
+				// Send error
+				error = true;
+			}
+		}
+
+		if (error) {
+			setState(TCPClientState::Close);
+			co_return false;
+		}
+
+		co_return true;
+	}
+
+	asio::awaitable<bool>
+	TCPClient::recvFromServer(
+		std::array<char, 512>& recvBuffer,
+		uint32_t* recvBufferLen
+	)
+	{
+		// Receive modbus pdu from server
+		auto result = co_await(
+			socket_->async_read_some(asio::buffer(recvBuffer), use_nothrow_awaitable) ||
+			timeout(std::chrono::milliseconds(recvTimeout_))
+		);
+
+		bool error = false;
+		if (result.index() == 1) {
+			// timed out
+			error = true;
+		}
+		else {
+			auto [e, n] = std::get<0>(result);
+			*recvBufferLen = n;
+			if (e) {
+				// Send error
+				error = true;
+			}
+		}
+
+		if (error) {
+			setState(TCPClientState::Close);
+			co_return false;
+		}
+
 		co_return true;
 	}
 
 	void
 	TCPClient::shutdown(StateCallback stateCallback)
 	{
+#if 0
 		mutex_.lock();
 		clientLoopReady_ = false;
 		mutex_.unlock();
 
 		// Close socket
-		if (state_ == TCPClientState::Connected) {
+		if (tcpClientState_== TCPClientState::Connected) {
 			socket_->close();
-			state_ = TCPClientState::Close;
-			stateCallback(state_);
+			tcpClientState_= TCPClientState::Close;
+			stateCallback(tcpClientState_);
 		}
 
 		// Cleanup send queue
@@ -145,136 +237,121 @@ namespace ModbusTCP
 			auto qe = std::dynamic_pointer_cast<ModbusTCPQueueElement>(queueElement);
 			qe->responseCallback_(ModbusProt::ModbusError::ConnectionError, qe->req_, qe->res_);
 		}
+#endif
 
 		// Set down state
-		state_ = TCPClientState::Down;
-		stateCallback(state_);
+		setState(TCPClientState::Down);
+	}
+
+	bool
+	TCPClient::encode(
+		ModbusTCPQueueElement::SPtr& queueElement,
+		uint16_t transactionIdentifier,
+		std::array<char, 512>& sendBuffer,
+		uint32_t* sendBufferLen
+	)
+	{
+		std::stringstream ss;
+		*sendBufferLen = 0;
+
+		// Get queue data
+		auto address = queueElement->address_;
+		auto req = queueElement->req_;
+
+		// Encode data packet
+		ModbusTCP modbusTCPReq;
+		modbusTCPReq.modbusPDU(req);
+		modbusTCPReq.transactionIdentifier(transactionIdentifier);
+		modbusTCPReq.unitIdentifier(address);
+
+		ss.rdbuf()->pubsetbuf(sendBuffer.data(), sendBuffer.size());
+		bool rc = modbusTCPReq.encode(ss);
+		if (!rc) {
+			return false;
+		}
+		*sendBufferLen = ss.rdbuf()->in_avail();
+		return true;
+	}
+
+	bool
+	TCPClient::decode(
+		ModbusTCPQueueElement::SPtr& queueElement,
+		std::array<char, 512>& recvBuffer,
+		uint32_t recvBufferLen
+	)
+	{
+		// Decode data packet
+		ModbusTCP modbusTCPRes;
+		std::stringstream ss;
+
+		ss.rdbuf()->pubsetbuf(recvBuffer.data(), recvBuffer.size());
+		bool rc = modbusTCPRes.decode(ss);
+		if (!rc) {
+			return false;
+		}
+
+		// Call result handler
+		auto res = modbusTCPRes.modbusPDU();
+		queueElement->responseCallback_(ModbusProt::ModbusError::Ok, queueElement->req_, res);
+		return true;
 	}
 
 	asio::awaitable<void>
 	TCPClient::clientLoop(
-		asio::ip::tcp::endpoint targetEndpoint,
-		StateCallback stateCallback,
-		uint32_t reconnectTimeout
+		asio::ip::tcp::endpoint targetEndpoint
 	)
 	{
 		std::cout << "TCPClient::clientLoop" << std::endl;
-		clientLoopReady_ = true;
-		stateCallback_ = stateCallback;
+		bool rc = true;
 
-		while(clientLoopReady_) {
+		while(true) {
 			// Connect to server
-			auto rc = co_await connectToServer(
-				targetEndpoint,
-				stateCallback,
-				reconnectTimeout
+			auto rc = co_await connectToServer(targetEndpoint);
+			if (!rc) break;
 
-			);
-			if (!rc) {
-				// Check end condition
-				if (!clientLoopReady_ || reconnectTimeout == 0) {
-					shutdown(stateCallback);
+			uint16_t tid = 1;
+			while (true) {
+
+				// Receive element from client channel
+				auto [e, qe] = co_await channel_.async_receive(use_nothrow_awaitable);
+				if (e) {
+					// Set close state
+					setState(TCPClientState::Close);
 					co_return;
 				}
 
-				// Start reconnect timer
-				auto rc = co_await startTimer(reconnectTimeout);
-				if (!rc) {
-					shutdown(stateCallback);
-					co_return;
-				}
-				continue;
-			}
-
-			bool recvLoopReady = true;
-			uint16_t transactionIdentifier = 1;
-			while (recvLoopReady) {
-				// Read data from queue
-				auto [resultCode, queueElement] = sendQueue_.recv();
-				if (!resultCode) {
-					// Only a disconnect call should cause this error
-					shutdown(stateCallback);
-					co_return;
-				}
-
-				// Encode data packet
-				auto qe = std::dynamic_pointer_cast<ModbusTCPQueueElement>(queueElement);
-				auto address = qe->address_;
-				auto req = qe->req_;
-				auto res = qe->res_;
-				auto responseCallback = qe->responseCallback_;
-
+				// Encode modbus data to modbus pdu
 				std::array<char, 512> sendBuffer;
-				std::stringstream ss1;
-				ss1.rdbuf()->pubsetbuf(sendBuffer.data(), sendBuffer.size());
-
-				ModbusTCP modbusTCPReq;
-				modbusTCPReq.modbusPDU(req);
-				modbusTCPReq.transactionIdentifier(transactionIdentifier);
-				modbusTCPReq.unitIdentifier(address);
-
-				if (!modbusTCPReq.encode(ss1)) {
-					responseCallback(ModbusProt::ModbusError::EncodeDataError, req, res);
-					continue;
-				}
-
-				// Send modbus pdu to tcp server
-				auto [e1, n1] = co_await async_write(*socket_, asio::buffer(sendBuffer, ss1.rdbuf()->in_avail()), use_nothrow_awaitable);
-				if (e1) {
-					recvLoopReady = false;
-
-					// Check end condition
-					if (!clientLoopReady_ || reconnectTimeout == 0) {
-						responseCallback(ModbusProt::ModbusError::ConnectionError, req, res);
-						shutdown(stateCallback);
-						co_return;
-					}
-					continue;
-				}
-
-				// Receive modbu pdu from tcp server
-				// FIXME: Timeout handling is missing
-				std::array<char, 512> recvBuffer;
-				auto [e2, n2] = co_await socket_->async_read_some(asio::buffer(recvBuffer), use_nothrow_awaitable);
-				if (e2) {
-					recvLoopReady = false;
-
-					// Check end condition
-					if (!clientLoopReady_ || reconnectTimeout == 0) {
-						responseCallback(ModbusProt::ModbusError::ConnectionError, req, res);
-						shutdown(stateCallback);
-						co_return;
-					}
-					continue;
-				}
-
-				// Decode data packet
-				ModbusTCP modbusTCPRes;
-				std::stringstream ss2;
-				ss2.rdbuf()->pubsetbuf(recvBuffer.data(), recvBuffer.size());
-				if (!modbusTCPRes.decode(ss2)) {
-					recvLoopReady = false;
-
-					// Check end condition
-					if (!clientLoopReady_ || reconnectTimeout == 0) {
-						responseCallback(ModbusProt::ModbusError::DecodeDataError, req, res);
-						shutdown(stateCallback);
-						co_return;
-					}
-					continue;
-				}
-				res = modbusTCPRes.modbusPDU();
-
-				responseCallback(ModbusProt::ModbusError::Ok, req, res);
-			}
-
-			// Reconnect
-			if (clientLoopReady_) {
-				// Start reconnect timer
-				auto rc = co_await startTimer(reconnectTimeout);
+				uint32_t sendBufferLen = 0;
+				rc = encode(qe, tid, sendBuffer, &sendBufferLen);
 				if (!rc) {
-					shutdown(stateCallback);
-					co_return;
+					qe->responseCallback_(ModbusProt::ModbusError::EncodeDataError, qe->req_, qe->res_);
+					continue;
+				}
+
+				// Send modbus pdu to server
+				rc = co_await sendToServer(sendBuffer, sendBufferLen);
+				if (rc) {
+					qe->responseCallback_(ModbusProt::ModbusError::ConnectionError, qe->req_, qe->res_);
+					if (reconnectTimeout_ == 0) co_return;
+					continue;
+				}
+
+				// Receive modbus pdu from server
+				std::array<char, 512> recvBuffer;
+				uint32_t recvBufferLen = 512;
+				rc = co_await recvFromServer(recvBuffer, &recvBufferLen);
+				if (rc) {
+					qe->responseCallback_(ModbusProt::ModbusError::ConnectionError, qe->req_, qe->res_);
+					if (reconnectTimeout_ == 0) co_return;
+					continue;
+				}
+
+				// Decode modbus pdu to modbus data
+				rc = decode(qe, recvBuffer, recvBufferLen);
+				if (!rc) {
+					qe->responseCallback_(ModbusProt::ModbusError::DecodeDataError, qe->req_, qe->res_);
+					continue;
 				}
 			}
 		}
@@ -285,36 +362,23 @@ namespace ModbusTCP
 	void
 	TCPClient::connect(
 		asio::ip::tcp::endpoint target,
-		StateCallback stateCallback,
-		uint32_t reconnectTimeout
+		StateCallback stateCallback
 	)
 	{
 		std::cout << "TCPClient::connect" << std::endl;
+		stateCallback_ = stateCallback;
 
 		// Connect to server
-		co_spawn(
-			ctx(),
-			clientLoop(target, stateCallback, reconnectTimeout),
-			asio::detached
-		);
+		co_spawn(ctx(), clientLoop(target), asio::detached);
 	}
 
 	void
 	TCPClient::disconnect(void)
 	{
 		std::cout << "TCPClient::disconnect" << std::endl;
-		mutex_.lock();
-		clientLoopReady_ = false;
-		mutex_.unlock();
 
-		// Close send queue
-		stopSendQueue();
-
-		// Close socket
 		socket_->close();
-
-		// Stop timer
-		stopTimer();
+		channel_.cancel();
 	}
 
 	void
@@ -340,8 +404,14 @@ namespace ModbusTCP
 		qe->req_ = req;
 		qe->res_ = nullptr;
 		qe->responseCallback_ = responseCallback;
-		Base::QueueElement::SPtr bqe = qe;
-		sendQueue_.send(bqe);
+		if (!channel_.try_send(std::error_code{}, qe)) {
+			// TCP client not ready
+			mutex_.unlock();
+
+			ModbusProt::ModbusPDU::SPtr res = nullptr;
+			responseCallback(ModbusProt::ModbusError::ConnectionError, req, res);
+			return;
+		}
 
 		mutex_.unlock();
 	}
