@@ -33,7 +33,6 @@ namespace ModbusTCP
 	: TCPBase(ctx)
 	, channel_(ctx, 10)
 	{
-		socket_ = std::make_shared<asio::ip::tcp::socket>(TCPBase::ctx());
 	}
 
 	TCPClient::TCPClient(
@@ -42,15 +41,15 @@ namespace ModbusTCP
 	: TCPBase()
 	, channel_(ctx(), 10)
 	{
-		socket_ = std::make_shared<asio::ip::tcp::socket>(ctx());
 	}
 
 	TCPClient::~TCPClient(
 		void
 	)
 	{
-		// Delete socket
+		// Delete socket and timer
 		socket_ = nullptr;
+		timer_ = nullptr;
 	}
 
 	void
@@ -85,18 +84,21 @@ namespace ModbusTCP
 		stateCallback_(tcpClientState_);
 	}
 
-	asio::awaitable<void>
+	asio::awaitable<bool>
 	TCPClient::timeout(std::chrono::steady_clock::duration duration)
 	{
-		asio::steady_timer timer(co_await asio::this_coro::executor);
-		timer.expires_after(duration);
-		co_await timer.async_wait(use_nothrow_awaitable);
-	}
+		// Create timer instance if not exist
+		if (timer_ == nullptr) {
+			 timer_ = std::make_shared<asio::steady_timer>(co_await asio::this_coro::executor);
+		}
 
-	void
-	TCPClient::stopSendQueue(void)
-	{
-		;
+		timer_->expires_after(duration);
+		auto [e] = co_await timer_->async_wait(use_nothrow_awaitable);
+		if (e) {
+			co_return false;
+		}
+
+		co_return true;
 	}
 
 	asio::awaitable<bool>
@@ -138,7 +140,12 @@ namespace ModbusTCP
 
 				// Start reconnect timer
 				setState(TCPClientState::WaitForReconnect);
-				co_await timeout(std::chrono::milliseconds(reconnectTimeout_));
+				auto rc = co_await timeout(std::chrono::milliseconds(reconnectTimeout_));
+				if (!rc) {
+					// Set close state
+					setState(TCPClientState::Close);
+					co_return false;
+				}
 				continue;
 			}
 			break;
@@ -216,33 +223,6 @@ namespace ModbusTCP
 		co_return true;
 	}
 
-	void
-	TCPClient::shutdown(StateCallback stateCallback)
-	{
-#if 0
-		mutex_.lock();
-		clientLoopReady_ = false;
-		mutex_.unlock();
-
-		// Close socket
-		if (tcpClientState_== TCPClientState::Connected) {
-			socket_->close();
-			tcpClientState_= TCPClientState::Close;
-			stateCallback(tcpClientState_);
-		}
-
-		// Cleanup send queue
-		Base::QueueElement::SPtr queueElement = nullptr;
-		while ((queueElement = sendQueue_.getAndRemoveFirst()) != nullptr) {
-			auto qe = std::dynamic_pointer_cast<ModbusTCPQueueElement>(queueElement);
-			qe->responseCallback_(ModbusProt::ModbusError::ConnectionError, qe->req_, qe->res_);
-		}
-#endif
-
-		// Set down state
-		setState(TCPClientState::Down);
-	}
-
 	bool
 	TCPClient::encode(
 		ModbusTCPQueueElement::SPtr& queueElement,
@@ -304,6 +284,9 @@ namespace ModbusTCP
 		std::cout << "TCPClient::clientLoop" << std::endl;
 		bool rc = true;
 
+		socket_ = std::make_shared<asio::ip::tcp::socket>(co_await asio::this_coro::executor);
+		timer_ = std::make_shared<asio::steady_timer>(co_await asio::this_coro::executor);
+
 		while(true) {
 			// Connect to server
 			auto rc = co_await connectToServer(targetEndpoint);
@@ -316,7 +299,9 @@ namespace ModbusTCP
 				auto [e, qe] = co_await channel_.async_receive(use_nothrow_awaitable);
 				if (e) {
 					// Set close state
-					setState(TCPClientState::Close);
+					timer_ = nullptr;
+					socket_ = nullptr;
+					setState(TCPClientState::Down);
 					co_return;
 				}
 
@@ -356,6 +341,21 @@ namespace ModbusTCP
 			}
 		}
 
+		// Remove all elements from queue
+		while (true) {
+ 			bool rc = channel_.try_receive(
+				[](asio::error_code e, ModbusTCPQueueElement::SPtr qe) {
+ 					if (e) return;
+					qe->responseCallback_(ModbusProt::ModbusError::ConnectionError, qe->req_, qe->res_);
+				}
+			);
+			if (!rc) break;
+		}
+
+		// Cleanup and set down state
+		timer_ = nullptr;
+		socket_ = nullptr;
+		setState(TCPClientState::Down);
 		co_return;
 	}
 
@@ -372,13 +372,59 @@ namespace ModbusTCP
 		co_spawn(ctx(), clientLoop(target), asio::detached);
 	}
 
+	asio::awaitable<void>
+	TCPClient::close(void)
+	{
+		// Cancel timer
+		if (timer_ != nullptr) timer_->cancel();
+
+		// Close and cancel socket connection to tcp server
+		if (socket_ != nullptr) {
+			if (socket_->is_open()) socket_->close();
+			socket_->cancel();
+		}
+
+		// Cancel channel
+		channel_.cancel();
+
+		co_return;
+	}
+
 	void
 	TCPClient::disconnect(void)
 	{
 		std::cout << "TCPClient::disconnect" << std::endl;
+		co_spawn(ctx(), close(), asio::detached);
+	}
 
-		socket_->close();
-		channel_.cancel();
+	asio::awaitable<void>
+	TCPClient::addToChannel(
+		uint8_t address,
+		ModbusProt::ModbusPDU::SPtr& req,
+		ModbusProt::ResponseCallback responseCallback
+	)
+	{
+		// Check tcp client state
+		if (tcpClientState_ != TCPClientState::Connected) {
+			ModbusProt::ModbusPDU::SPtr res = nullptr;
+			responseCallback(ModbusProt::ModbusError::ConnectionError, req, res);
+			co_return;
+		}
+
+		// Add new packet to queue
+		auto qe = std::make_shared<ModbusTCPQueueElement>();
+		qe->address_ = address;
+		qe->req_ = req;
+		qe->res_ = nullptr;
+		qe->responseCallback_ = responseCallback;
+
+		if (!channel_.try_send(std::error_code{}, qe)) {
+			// Channel error
+			ModbusProt::ModbusPDU::SPtr res = nullptr;
+			responseCallback(ModbusProt::ModbusError::ConnectionError, req, res);
+		}
+
+		co_return;
 	}
 
 	void
@@ -388,32 +434,7 @@ namespace ModbusTCP
 		ModbusProt::ResponseCallback responseCallback
 	)
 	{
-		mutex_.lock();
-		if (!clientLoopReady_) {
-			// TCP client not ready
-			mutex_.unlock();
-
-			ModbusProt::ModbusPDU::SPtr res = nullptr;
-			responseCallback(ModbusProt::ModbusError::ConnectionError, req, res);
-			return;
-		}
-
-		// Add new packet to queue
-		auto qe = std::make_shared<ModbusTCPQueueElement>();
-		qe->address_ = address;
-		qe->req_ = req;
-		qe->res_ = nullptr;
-		qe->responseCallback_ = responseCallback;
-		if (!channel_.try_send(std::error_code{}, qe)) {
-			// TCP client not ready
-			mutex_.unlock();
-
-			ModbusProt::ModbusPDU::SPtr res = nullptr;
-			responseCallback(ModbusProt::ModbusError::ConnectionError, req, res);
-			return;
-		}
-
-		mutex_.unlock();
+		co_spawn(ctx(), addToChannel(address, req, responseCallback), asio::detached);
 	}
 
 }

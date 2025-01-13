@@ -79,14 +79,21 @@ namespace TestModbusTCP
     	client.reconnectTimeout(200);
     	client.connect(serverEndpoint, connectionStateCallback);
     	CPUNIT_ASSERT(condition_.wait(3000) == true);
-    	client.disconnect();
 
     	CPUNIT_ASSERT(stateVec_[0] == TCPClientState::Connecting);
-    	CPUNIT_ASSERT(stateVec_[1] == TCPClientState::Close);
+    	CPUNIT_ASSERT(stateVec_[1] == TCPClientState::WaitForReconnect);
     	CPUNIT_ASSERT(stateVec_[2] == TCPClientState::Connecting);
-    	CPUNIT_ASSERT(stateVec_[3] == TCPClientState::Close);
+    	CPUNIT_ASSERT(stateVec_[3] == TCPClientState::WaitForReconnect);
     	CPUNIT_ASSERT(stateVec_[4] == TCPClientState::Connecting);
-    	CPUNIT_ASSERT(stateVec_[5] == TCPClientState::Close);
+    	CPUNIT_ASSERT(stateVec_[5] == TCPClientState::WaitForReconnect);
+    	stateVec_.clear();
+
+    	numberStates_ = 2;
+    	condition_.init();
+    	client.disconnect();
+    	CPUNIT_ASSERT(condition_.wait(3000) == true);
+    	CPUNIT_ASSERT(stateVec_[0] == TCPClientState::Close);
+    	CPUNIT_ASSERT(stateVec_[1] == TCPClientState::Down);
     }
 
     CPUNIT_TEST(TestModbusTCP, server_open_close)

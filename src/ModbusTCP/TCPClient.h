@@ -86,16 +86,16 @@ namespace ModbusTCP
 		std::mutex mutex_;
 		bool clientLoopReady_ = false;
 		TCPClientState tcpClientState_ = TCPClientState::Init;
+
 		std::shared_ptr<asio::ip::tcp::socket> socket_ = nullptr;
+		std::shared_ptr<asio::steady_timer> timer_ = nullptr;
 
 		StateCallback stateCallback_;
 		ClientChannel channel_;
 
-		void shutdown(StateCallback stateCallback);
-		void stopSendQueue(void);
 		void setState(TCPClientState tcpClientState);
 
-		asio::awaitable<void> timeout(
+		asio::awaitable<bool> timeout(
 			std::chrono::steady_clock::duration duration
 		);
 		asio::awaitable<bool> connectToServer(
@@ -112,6 +112,12 @@ namespace ModbusTCP
 		asio::awaitable<void> clientLoop(
 			asio::ip::tcp::endpoint targetEndpoint
 		);
+		asio::awaitable<void> addToChannel(
+			uint8_t address,
+			ModbusProt::ModbusPDU::SPtr& req,
+			ModbusProt::ResponseCallback responseCallback
+		);
+		asio::awaitable<void> close(void);
 
 		bool encode(
 			ModbusTCPQueueElement::SPtr& queueElement,
