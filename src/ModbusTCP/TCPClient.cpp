@@ -87,11 +87,6 @@ namespace ModbusTCP
 	asio::awaitable<bool>
 	TCPClient::timeout(std::chrono::steady_clock::duration duration)
 	{
-		// Create timer instance if not exist
-		if (timer_ == nullptr) {
-			 timer_ = std::make_shared<asio::steady_timer>(co_await asio::this_coro::executor);
-		}
-
 		timer_->expires_after(duration);
 		auto [e] = co_await timer_->async_wait(use_nothrow_awaitable);
 		if (e) {
