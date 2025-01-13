@@ -223,6 +223,35 @@ namespace ModbusTCP
 		co_return true;
 	}
 
+	asio::awaitable<bool>
+	TCPClient::recvFromChannel(
+		ModbusTCPQueueElement::SPtr& qe
+	)
+	{
+		std::array<char, 512> recvBuffer;
+
+		// Receive data from channel and handle tcp connection errors
+		auto result = co_await(
+			channel_.async_receive(use_nothrow_awaitable) ||
+			socket_->async_read_some(asio::buffer(recvBuffer), use_nothrow_awaitable)
+		);
+
+		bool error = false;
+		if (result.index() == 1) {
+			// timed out
+			co_return false;
+		}
+		else {
+			auto [e, qe] = std::get<0>(result);
+			if (e) {
+				// Send error
+				co_return false;
+			}
+		}
+
+		co_return true;
+	}
+
 	bool
 	TCPClient::encode(
 		ModbusTCPQueueElement::SPtr& queueElement,
@@ -296,8 +325,9 @@ namespace ModbusTCP
 			while (true) {
 
 				// Receive element from client channel
-				auto [e, qe] = co_await channel_.async_receive(use_nothrow_awaitable);
-				if (e) {
+				ModbusTCPQueueElement::SPtr qe;
+				rc = co_await recvFromChannel(qe);
+				if (!rc) {
 					// Set close state
 					timer_ = nullptr;
 					socket_ = nullptr;

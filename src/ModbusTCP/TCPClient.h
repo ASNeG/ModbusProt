@@ -36,12 +36,10 @@ namespace ModbusTCP
 		Init,				// The connection class was created
 		Connecting,			// The connection is currently being opened
 		Connected,			// The connection is open
-		WaitForReconnect,	// ...
-
-
-		Close,			// The connection was closed and a reconnect is performed
-		Error,			// The connection could not be open or an error has occurred
-		Down			// The connection is down. A connection can no longer be established
+		WaitForReconnect,	// Wait for reconnecting
+		Close,				// The connection was closed and a reconnect is performed
+		Error,				// The connection could not be open or an error has occurred
+		Down				// The connection is down. A connection can no longer be established
 	};
 
 	class TCPClient
@@ -108,6 +106,9 @@ namespace ModbusTCP
 		asio::awaitable<bool> recvFromServer(
 			std::array<char, 512>& recvBuffer,
 			uint32_t* recvBufferLen
+		);
+		asio::awaitable<bool> recvFromChannel(
+			ModbusTCPQueueElement::SPtr& qe
 		);
 		asio::awaitable<void> clientLoop(
 			asio::ip::tcp::endpoint targetEndpoint

@@ -32,8 +32,9 @@ namespace TestModbusTCP
 		}
 	}
 
-	TCPServerHandler::SPtr acceptCallback(asio::ip::tcp::socket& client)
+	TCPServerHandler::SPtr acceptCallbackError(asio::ip::tcp::socket& client)
 	{
+		client.close();
 		return nullptr;
 	}
 
@@ -105,9 +106,39 @@ namespace TestModbusTCP
     	CPUNIT_ASSERT(server.getEndpoint(serverIP, serverPort1, serverEndpoint) == true);
 
     	// Open server acceptor
-    	CPUNIT_ASSERT(server.open(serverEndpoint, acceptCallback) == true);
+    	CPUNIT_ASSERT(server.open(serverEndpoint, acceptCallbackError) == true);
 
     	sleep(1);
+
+    	// Close server acceptor
+    	server.close();
+    }
+
+    CPUNIT_TEST(TestModbusTCP, client_connect_server_error)
+	{
+    	asio::ip::tcp::endpoint serverEndpoint;
+
+    	// Create server object
+    	TCPServer server;
+    	CPUNIT_ASSERT(server.getEndpoint(serverIP, serverPort1, serverEndpoint) == true);
+
+    	// Open server acceptor
+    	CPUNIT_ASSERT(server.open(serverEndpoint, acceptCallbackError) == true);
+
+    	// Create client object
+    	TCPClient client;
+    	CPUNIT_ASSERT(client.getEndpoint(serverIP, serverPort1, serverEndpoint) == true);
+
+    	// Client connect to server - server don't accept connection
+    	condition_.init();
+    	stateVec_.clear();
+    	numberStates_ = 3;
+    	client.connect(serverEndpoint, connectionStateCallback);
+    	CPUNIT_ASSERT(condition_.wait(3000) == true);
+
+    	CPUNIT_ASSERT(stateVec_[0] == TCPClientState::Connecting);
+    	CPUNIT_ASSERT(stateVec_[1] == TCPClientState::Connected);
+    	CPUNIT_ASSERT(stateVec_[2] == TCPClientState::Down);
 
     	// Close server acceptor
     	server.close();
