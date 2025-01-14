@@ -111,31 +111,31 @@ namespace ModbusProt
 	//
 	// ------------------------------------------------------------------------
 	// ------------------------------------------------------------------------
-	ReadCoilsRes::ReadCoilsRes(void)
+	ReadCoilsResPDU::ReadCoilsResPDU(void)
 	: ModbusPDU(PDUFunction::ReadCoils, PDUType::Response)
 	{
 		reset();
 	}
 
-	ReadCoilsRes::~ReadCoilsRes(void)
+	ReadCoilsResPDU::~ReadCoilsResPDU(void)
 	{
 	}
 
 	void
-	ReadCoilsRes::reset(void)
+	ReadCoilsResPDU::reset(void)
 	{
 		byteCount_ =  0;
 		memset((char*)coilStatus_, 0x00, MAX_BYTE_LEN);
 	}
 
 	uint8_t
-	ReadCoilsRes::byteCount(void)
+	ReadCoilsResPDU::byteCount(void)
 	{
 		return byteCount_;
 	}
 
 	bool
-	ReadCoilsRes::setCoilStatus(uint16_t  idx, bool value)
+	ReadCoilsResPDU::setCoilStatus(uint16_t  idx, bool value)
 	{
 		// Check index
 		if (idx > MAX_BYTE_LEN * 8) return false;
@@ -156,7 +156,7 @@ namespace ModbusProt
 	}
 
 	bool
-	ReadCoilsRes::getCoilStatus(uint16_t idx, bool& value)
+	ReadCoilsResPDU::getCoilStatus(uint16_t idx, bool& value)
 	{
 		// Check index
 		if (idx >= MAX_BYTE_LEN * 8) return false;
@@ -173,7 +173,7 @@ namespace ModbusProt
 	}
 
 	bool
-	ReadCoilsRes::encode(std::ostream& os) const
+	ReadCoilsResPDU::encode(std::ostream& os) const
 	{
 		// Write PDU header to output stream
 		if (ModbusPDU::encode(os) == false) {
@@ -193,7 +193,7 @@ namespace ModbusProt
 	}
 
 	bool
-	ReadCoilsRes::decode(std::istream& is)
+	ReadCoilsResPDU::decode(std::istream& is)
 	{
 		// Read data from input stream
 		try {

@@ -33,7 +33,7 @@ namespace ModbusProt
 		{
 			case static_cast<int>(PDUFunction::ReadCoils):
 				if (pduType == PDUType::Request) return std::make_shared<ReadCoilsReqPDU>();
-				else std::make_shared<ReadCoilsRes>();
+				else return std::make_shared<ReadCoilsResPDU>();
 				break;
 			default:
 				return nullptr;

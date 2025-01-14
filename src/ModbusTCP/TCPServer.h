@@ -30,7 +30,7 @@ namespace ModbusTCP
 	: public TCPBase
 	{
 	  public:
-		using AcceptCallback = std::function<TCPServerHandler::SPtr (asio::ip::tcp::socket& client)>;
+		using AcceptCallback = std::function<TCPServerHandler::SPtr (asio::io_context& ctx, asio::ip::tcp::socket& client)>;
 
 		TCPServer(
 			asio::io_context& ctx

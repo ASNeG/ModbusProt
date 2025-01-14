@@ -149,15 +149,6 @@ namespace ModbusTCP
 			return false;
 		}
 
-		// Read modbus function code
-		uint8_t funcCode;
-		try {
-			is.read((char*)&funcCode, 1);
-		}
-		catch (std::ostream::failure e) {
-			return false;
-		}
-
 		// Decode function code of modbus PDU
 		ModbusPDU modbusPDU(PDUFunction::None, PDUType::None);
 		if (!modbusPDU.decode(is)) return false;

@@ -46,14 +46,14 @@ namespace ModbusProt
 	};
 
 
-	class ReadCoilsRes
+	class ReadCoilsResPDU
 	: public ModbusPDU
 	{
 	  public:
-		using SPtr = std::shared_ptr<ReadCoilsRes>;
+		using SPtr = std::shared_ptr<ReadCoilsResPDU>;
 
-		ReadCoilsRes(void);
-		virtual ~ReadCoilsRes(void);
+		ReadCoilsResPDU(void);
+		virtual ~ReadCoilsResPDU(void);
 
 		void reset(void);
 		uint8_t byteCount(void);

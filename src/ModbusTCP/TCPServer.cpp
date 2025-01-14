@@ -100,7 +100,7 @@ namespace ModbusTCP
 			}
 
 			// Get handler form application
-			auto handler = acceptCallback(client);
+			auto handler = acceptCallback(ctx(), client);
 			if (handler == nullptr) {
 				continue;
 			}

@@ -237,11 +237,12 @@ namespace ModbusTCP
 			co_return false;
 		}
 		else {
-			auto [e, qe] = std::get<0>(result);
+			auto [e, queueElement] = std::get<0>(result);
 			if (e) {
 				// Send error
 				co_return false;
 			}
+			qe = queueElement;
 		}
 
 		co_return true;
@@ -273,7 +274,7 @@ namespace ModbusTCP
 		if (!rc) {
 			return false;
 		}
-		*sendBufferLen = ss.rdbuf()->in_avail();
+		*sendBufferLen = ss.tellp();
 		return true;
 	}
 
@@ -341,21 +342,23 @@ namespace ModbusTCP
 
 				// Send modbus pdu to server
 				rc = co_await sendToServer(sendBuffer, sendBufferLen);
-				if (rc) {
+				if (!rc) {
 					qe->responseCallback_(ModbusProt::ModbusError::ConnectionError, qe->req_, qe->res_);
 					if (reconnectTimeout_ == 0) co_return;
 					continue;
 				}
 
+				std::cout << "AAAAAAAAAAAAAAAAAA1" << std::endl;
 				// Receive modbus pdu from server
 				std::array<char, 512> recvBuffer;
 				uint32_t recvBufferLen = 512;
 				rc = co_await recvFromServer(recvBuffer, &recvBufferLen);
-				if (rc) {
+				if (!rc) {
 					qe->responseCallback_(ModbusProt::ModbusError::ConnectionError, qe->req_, qe->res_);
 					if (reconnectTimeout_ == 0) co_return;
 					continue;
 				}
+				std::cout << "AAAAAAAAAAAAAAAAAA2" << std::endl;
 
 				// Decode modbus pdu to modbus data
 				rc = decode(qe, recvBuffer, recvBufferLen);
@@ -459,6 +462,7 @@ namespace ModbusTCP
 		ModbusProt::ResponseCallback responseCallback
 	)
 	{
+		std::cout << "TCPClient::send" << std::endl;
 		co_spawn(ctx(), addToChannel(address, req, responseCallback), asio::detached);
 	}
 

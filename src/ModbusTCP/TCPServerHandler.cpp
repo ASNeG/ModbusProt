@@ -28,10 +28,17 @@ namespace ModbusTCP
 
 	constexpr auto use_nothrow_awaitable = asio::experimental::as_tuple(asio::use_awaitable);
 
+	TCPServerHandler::TCPServerHandler(
+		asio::io_context& ctx
+	)
+	: TCPBase(ctx)
+	{
+	}
 
 	TCPServerHandler::TCPServerHandler(
 		void
 	)
+	: TCPBase()
 	{
 	}
 
@@ -53,10 +60,13 @@ namespace ModbusTCP
 		sendTimeout_ = sendTimeout;
 	}
 
-	void
-	TCPServerHandler::closeConnection(void)
+	asio::awaitable<void>
+	TCPServerHandler::close(void)
 	{
-		// FIXME: TODO
+		if (socket_ != nullptr) {
+			socket_->cancel();
+		}
+		co_return;
 	}
 
 	asio::awaitable<bool>
@@ -189,6 +199,13 @@ namespace ModbusTCP
 		return true;
 	}
 
+	void
+	TCPServerHandler::stateCallback(StateCallback stateCallback)
+	{
+		stateCallback_ = stateCallback;
+		stateCallback_(state_);
+	}
+
 	asio::awaitable<void>
 	TCPServerHandler::open(asio::ip::tcp::socket socket)
 	{
@@ -197,6 +214,9 @@ namespace ModbusTCP
 		// Create socket and timer
 		socket_ = std::make_shared<asio::ip::tcp::socket>(std::move(socket));
 		timer_ = std::make_shared<asio::steady_timer>(co_await asio::this_coro::executor);
+
+		state_ = TCPServerState::Connected;
+		if (stateCallback_) stateCallback_(state_);
 
 		for (;;) {
 
@@ -216,6 +236,7 @@ namespace ModbusTCP
 				// Close connection
 				break;
 			}
+			std::cout << "BBBBBBBBBBBBBB1   " << recvBufferLen << std::endl;
 
 			// Call application handler
 			ModbusProt::ModbusPDU::SPtr res;
@@ -241,27 +262,21 @@ namespace ModbusTCP
 				// Close connection
 				break;
 			}
-
-#if 0
-			auto [e2, n2] = co_await async_write(client_, asio::buffer(data, n1), use_nothrow_awaitable);
-			if (e2) {
-				break;
-			}
-#endif
 		}
-
-		// Close connection
-		closeConnection();
 
 		// Cleanup timer and socket
 		timer_ = nullptr;
 		socket_ = nullptr;
+
+		state_ = TCPServerState::Down;
+		if (stateCallback_) stateCallback_(state_);
 	}
 
 	void
-	TCPServerHandler::close(void)
+	TCPServerHandler::disconnect(void)
 	{
-
+		std::cout << "TCPServerHandler::disconnect" << std::endl;
+		co_spawn(ctx(), close(), asio::detached);
 	}
 
 }

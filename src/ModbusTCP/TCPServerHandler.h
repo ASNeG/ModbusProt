@@ -22,15 +22,28 @@
 #include <asio.hpp>
 
 #include "ModbusTCP/ModbusTCP.h"
+#include "ModbusTCP/TCPBase.h"
 
 namespace ModbusTCP
 {
 
+	enum class TCPServerState
+	{
+		Init,				// The connection class was created
+		Connected,			// The connection is open
+		Down				// The connection is down. A connection can no longer be established
+	};
+
 	class TCPServerHandler
+	: public TCPBase
 	{
 	  public:
 		using SPtr = std::shared_ptr<TCPServerHandler>;
+		using StateCallback = std::function<void (TCPServerState)>;
 
+		TCPServerHandler(
+			asio::io_context& ctx
+		);
 		TCPServerHandler(
 			void
 		);
@@ -41,8 +54,9 @@ namespace ModbusTCP
 		void recvTimeout(uint32_t recvTimeout);
 		void sendTimeout(uint32_t sendTimeout);
 
+		void stateCallback(StateCallback stateCallback);
 		asio::awaitable<void> open(asio::ip::tcp::socket socket);
-		void close(void);
+		void disconnect(void);
 		virtual bool handleModbusReq(
 			ModbusProt::ModbusPDU::SPtr& req,
 			ModbusProt::ModbusPDU::SPtr& res
@@ -52,10 +66,12 @@ namespace ModbusTCP
 		uint32_t recvTimeout_ = 5000;
 		uint32_t sendTimeout_ = 5000;
 
+		TCPServerState state_ = TCPServerState::Init;
+		StateCallback stateCallback_;
 		std::shared_ptr<asio::ip::tcp::socket> socket_ = nullptr;
 		std::shared_ptr<asio::steady_timer> timer_ = nullptr;
 
-		void closeConnection(void);
+		asio::awaitable<void> close(void);
 		asio::awaitable<bool> timeout(
 			std::chrono::steady_clock::duration duration
 		);
