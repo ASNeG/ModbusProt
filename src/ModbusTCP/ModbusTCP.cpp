@@ -90,6 +90,12 @@ namespace ModbusTCP
 		return modbusPDU_;
 	}
 
+	void
+	ModbusTCP::pduType(ModbusProt::PDUType pduType)
+	{
+		pduType_ = pduType;
+	}
+
 	bool
 	ModbusTCP::encode(std::ostream& os) const
 	{
@@ -150,7 +156,7 @@ namespace ModbusTCP
 		}
 
 		// Decode function code of modbus PDU
-		ModbusPDU modbusPDU(PDUFunction::None, PDUType::None);
+		ModbusPDU modbusPDU(PDUFunction::None, pduType_);
 		if (!modbusPDU.decode(is)) return false;
 
 		// Create modbus PDU class

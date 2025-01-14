@@ -8,10 +8,10 @@ def run_async_server():
     nreg = 200
     # initialize data store
     store = ModbusSlaveContext(
-        di=ModbusSequentialDataBlock(0, [15]*nreg),
-        co=ModbusSequentialDataBlock(0, [16]*nreg),
-        hr=ModbusSequentialDataBlock(0, [17]*nreg),
-        ir=ModbusSequentialDataBlock(0, [18]*nreg))
+        di=ModbusSequentialDataBlock(0, [0]*nreg),
+        co=ModbusSequentialDataBlock(0, [0]*nreg),
+        hr=ModbusSequentialDataBlock(0, [0]*nreg),
+        ir=ModbusSequentialDataBlock(0, [0]*nreg))
     context = ModbusServerContext(slaves=store, single=True)
 
     # initialize the server information

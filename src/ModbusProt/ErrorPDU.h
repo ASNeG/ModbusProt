@@ -23,14 +23,24 @@
 namespace ModbusProt
 {
 
-	class ErrorRes
+	class ErrorPDU
 	: public ModbusPDU
 	{
 	  public:
-		using SPtr = std::shared_ptr<ErrorRes>;
+		using SPtr = std::shared_ptr<ErrorPDU>;
+		using ExceptionCode = enum {
+			EC_FUNC_UNKNWON = 1,
+			EC_ADDRESS_UNKNWON,
+			EC_DATA_INVALID,
+			EC_PROCESSING_ERROR,
+			EC_PROCESSING_TAKES_A_LONG_TIME,
+			EC_REPEAT_REQUEST,
+			EC_PROG_UNKNOWN,
+			EC_PARITY_ERROR
+		};
 
-		ErrorRes(PDUFunction pduFunction);
-		virtual ~ErrorRes(void);
+		ErrorPDU(PDUFunction pduFunction);
+		virtual ~ErrorPDU(void);
 
 		uint8_t exceptionCode(void);
 		void exceptionCode(uint8_t exceptionCode);

@@ -36,6 +36,7 @@ namespace ModbusTCP
 		uint16_t length(void);
 		void unitIdentifier(uint8_t unitIdentifier);
 		uint8_t unitIdentifier(void);
+		void pduType(ModbusProt::PDUType pduType);
 
 		void modbusPDU(ModbusProt::ModbusPDU::SPtr& modbusPDU);
 		ModbusProt::ModbusPDU::SPtr& modbusPDU(void);
@@ -48,6 +49,7 @@ namespace ModbusTCP
 		uint16_t protocolIdentifier_= 0;
 		uint16_t length_ = 0;
 		uint8_t unitIdentifier_ = 0;
+		ModbusProt::PDUType pduType_ = ModbusProt::PDUType::None;
 		ModbusProt::ModbusPDU::SPtr modbusPDU_ = nullptr;
 	};
 

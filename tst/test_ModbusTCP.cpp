@@ -6,6 +6,7 @@
 #include "ModbusTCP/TCPClient.h"
 #include "ModbusTCP/TCPServer.h"
 #include "ModbusProt/ReadCoilsPDU.h"
+#include "ModbusProt/ErrorPDU.h"
 #include "Condition.h"
 
 namespace TestModbusTCP
@@ -15,7 +16,7 @@ namespace TestModbusTCP
 	using namespace Test;
 
 	const std::string serverIP = "127.0.0.1";
-	const std::string serverPort1 = "1234";
+	const std::string serverPort1 = "5502";
 
 
 	// Handle client response
@@ -301,11 +302,24 @@ namespace TestModbusTCP
     	responseCondition_.init();
     	ModbusProt::ReadCoilsReqPDU::SPtr readCoilsReq = std::make_shared<ModbusProt::ReadCoilsReqPDU>();
     	readCoilsReq->startingAddress(0x10);
-    	readCoilsReq->quantityOfInputs(0x10);
+    	readCoilsReq->quantityOfInputs(0x20);
     	ModbusProt::ModbusPDU::SPtr req = readCoilsReq;
 		client.send(0x12, req, responseCallback);
 
 		CPUNIT_ASSERT(responseCondition_.wait(3000) == true);
+		CPUNIT_ASSERT(req_ != nullptr);
+		CPUNIT_ASSERT(req_->pduType() == ModbusProt::PDUType::Request);
+		CPUNIT_ASSERT(req_->pduFunction() == ModbusProt::PDUFunction::ReadCoils);
+		auto readCoilsReqPDU = std::static_pointer_cast<ModbusProt::ReadCoilsReqPDU>(req_);
+		CPUNIT_ASSERT(readCoilsReqPDU->startingAddress() == 0x10);
+		CPUNIT_ASSERT(readCoilsReqPDU->quantityOfInputs() == 0x20);
+
+		CPUNIT_ASSERT(res_ != nullptr);
+		CPUNIT_ASSERT(res_->pduType() == ModbusProt::PDUType::Error);
+		CPUNIT_ASSERT(req_->pduFunction() == ModbusProt::PDUFunction::ReadCoils);
+		auto errorPDU = std::static_pointer_cast<ModbusProt::ErrorPDU>(res_);
+		CPUNIT_ASSERT(errorPDU->exceptionCode() == ModbusProt::ErrorPDU::ExceptionCode::EC_FUNC_UNKNWON);
+
 
     	// close handler
     	clientCondition_.init();
@@ -323,5 +337,61 @@ namespace TestModbusTCP
     	CPUNIT_ASSERT(clientCondition_.wait(3000) == true);
     	CPUNIT_ASSERT(clientStateVec_[0] == TCPClientState::Down);
     }
+
+    CPUNIT_TEST(TestModbusTCP, client)
+	{
+    	asio::ip::tcp::endpoint serverEndpoint;
+
+    	// Create client object
+    	TCPClient client;
+    	CPUNIT_ASSERT(client.getEndpoint(serverIP, serverPort1, serverEndpoint) == true);
+
+    	// Client connect to server
+    	clientCondition_.init();
+    	clientStateVec_.clear();
+    	clientNumberStates_ = 2;
+    	client.connect(serverEndpoint, clientConnectionStateCallback);
+    	CPUNIT_ASSERT(clientCondition_.wait(3000) == true);
+
+    	CPUNIT_ASSERT(clientStateVec_[0] == TCPClientState::Connecting);
+    	CPUNIT_ASSERT(clientStateVec_[1] == TCPClientState::Connected);
+
+    	// Client sends read coil request to server and receives error response
+    	responseCondition_.init();
+    	ModbusProt::ReadCoilsReqPDU::SPtr readCoilsReq = std::make_shared<ModbusProt::ReadCoilsReqPDU>();
+    	readCoilsReq->startingAddress(0x10);
+    	readCoilsReq->quantityOfInputs(0x20);
+    	ModbusProt::ModbusPDU::SPtr req = readCoilsReq;
+		client.send(0x12, req, responseCallback);
+
+		CPUNIT_ASSERT(responseCondition_.wait(3000) == true);
+		CPUNIT_ASSERT(req_ != nullptr);
+		CPUNIT_ASSERT(req_->pduType() == ModbusProt::PDUType::Request);
+		CPUNIT_ASSERT(req_->pduFunction() == ModbusProt::PDUFunction::ReadCoils);
+		auto readCoilsReqPDU = std::static_pointer_cast<ModbusProt::ReadCoilsReqPDU>(req_);
+		CPUNIT_ASSERT(readCoilsReqPDU->startingAddress() == 0x10);
+		CPUNIT_ASSERT(readCoilsReqPDU->quantityOfInputs() == 0x20);
+
+		CPUNIT_ASSERT(res_ != nullptr);
+		CPUNIT_ASSERT(res_->pduType() == ModbusProt::PDUType::Error);
+		CPUNIT_ASSERT(req_->pduFunction() == ModbusProt::PDUFunction::ReadCoils);
+		auto errorPDU = std::static_pointer_cast<ModbusProt::ErrorPDU>(res_);
+		CPUNIT_ASSERT(errorPDU->exceptionCode() == ModbusProt::ErrorPDU::ExceptionCode::EC_FUNC_UNKNWON);
+
+
+    	// close handler
+    	clientCondition_.init();
+    	clientStateVec_.clear();
+    	clientNumberStates_ = 1;
+
+
+    	client.disconnect();
+    	CPUNIT_ASSERT(serverCondition_.wait(3000) == true);
+    	CPUNIT_ASSERT(serverStateVec_[0] == TCPServerState::Down);
+
+    	CPUNIT_ASSERT(clientCondition_.wait(3000) == true);
+    	CPUNIT_ASSERT(clientStateVec_[0] == TCPClientState::Down);
+    }
+
 
 }

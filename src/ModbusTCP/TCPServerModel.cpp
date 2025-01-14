@@ -1,5 +1,5 @@
 /*
-   Copyright 2024-2025 Kai Huebl (kai@huebl-sgh.de)
+   Copyright 2025 Kai Huebl (kai@huebl-sgh.de)
 
    Lizenziert gemäß Apache Licence Version 2.0 (die „Lizenz“); Nutzung dieser
    Datei nur in Übereinstimmung mit der Lizenz erlaubt.
@@ -15,31 +15,42 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
-#include "ModbusProt/ModbusPDUFactory.h"
+#include <asio.hpp>
 
-#include "ErrorPDU.h"
-#include "ReadCoilsPDU.h"
+#include "ModbusTCP/TCPServerModel.h"
 
-namespace ModbusProt
+namespace ModbusTCP
 {
-	ModbusPDU::SPtr
-	ModbusPDUFactory::createModbusPDU(PDUFunction pduFunction, PDUType pduType)
+
+
+	TCPServerModel::TCPServerModel(
+		asio::io_context& ctx
+	)
+	: TCPServerHandler(ctx)
 	{
-		if (pduType == PDUType::Error) {
-			return std::make_shared<ErrorPDU>(pduFunction);
-		}
+	}
 
-		switch (static_cast<int>(pduFunction))
-		{
-			case static_cast<int>(PDUFunction::ReadCoils):
-				if (pduType == PDUType::Request) return std::make_shared<ReadCoilsReqPDU>();
-				else return std::make_shared<ReadCoilsResPDU>();
-				break;
-			default:
-				return nullptr;
-		}
+	TCPServerModel::TCPServerModel(
+		void
+	)
+	: TCPServerHandler()
+	{
+	}
 
-		return nullptr;
+	TCPServerModel::~TCPServerModel(
+		void
+	)
+	{
+	}
+
+	bool
+	TCPServerModel::handleModbusReq(
+		uint8_t unitIdentifier,
+		ModbusProt::ModbusPDU::SPtr& req,
+		ModbusProt::ModbusPDU::SPtr& res
+	)
+	{
+		return true;
 	}
 
 }

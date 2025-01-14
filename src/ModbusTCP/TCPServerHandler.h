@@ -58,6 +58,7 @@ namespace ModbusTCP
 		asio::awaitable<void> open(asio::ip::tcp::socket socket);
 		void disconnect(void);
 		virtual bool handleModbusReq(
+			uint8_t unitIdentifier,
 			ModbusProt::ModbusPDU::SPtr& req,
 			ModbusProt::ModbusPDU::SPtr& res
 		);

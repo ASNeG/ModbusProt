@@ -158,6 +158,7 @@ namespace ModbusTCP
 		// Decode data packet
 		std::stringstream ss;
 
+		modbusTCPReq.pduType(ModbusProt::PDUType::Request);
 		ss.rdbuf()->pubsetbuf(recvBuffer.data(), recvBuffer.size());
 		bool rc = modbusTCPReq.decode(ss);
 		if (!rc) {
@@ -183,19 +184,20 @@ namespace ModbusTCP
 		if (!rc) {
 			return false;
 		}
-		*sendBufferLen = ss.rdbuf()->in_avail();
+		*sendBufferLen = ss.tellp();
 		return true;
 	}
 
 	bool
 	TCPServerHandler::handleModbusReq(
+		uint8_t unitIdentifier,
 		ModbusProt::ModbusPDU::SPtr& req,
 		ModbusProt::ModbusPDU::SPtr& res
 	)
 	{
-		ModbusProt::ErrorRes::SPtr errorRes = std::make_shared<ModbusProt::ErrorRes>(req->pduFunction());
-		errorRes->exceptionCode(123); // FIXME: Set correct exception code
-		res = errorRes;
+		ModbusProt::ErrorPDU::SPtr errorPDU = std::make_shared<ModbusProt::ErrorPDU>(req->pduFunction());
+		errorPDU->exceptionCode(ModbusProt::ErrorPDU::ExceptionCode::EC_FUNC_UNKNWON); // FIXME: Set correct exception code
+		res = errorPDU;
 		return true;
 	}
 
@@ -236,11 +238,10 @@ namespace ModbusTCP
 				// Close connection
 				break;
 			}
-			std::cout << "BBBBBBBBBBBBBB1   " << recvBufferLen << std::endl;
 
 			// Call application handler
 			ModbusProt::ModbusPDU::SPtr res;
-			rc = handleModbusReq(modbusTCP.modbusPDU(), res);
+			rc = handleModbusReq(modbusTCP.unitIdentifier(), modbusTCP.modbusPDU(), res);
 			if (!rc) {
 				// Close connection
 				break;

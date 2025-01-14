@@ -1,5 +1,5 @@
 /*
-   Copyright 2024 Kai Huebl (kai@huebl-sgh.de)
+   Copyright 2024-2025 Kai Huebl (kai@huebl-sgh.de)
 
    Lizenziert gemäß Apache Licence Version 2.0 (die „Lizenz“); Nutzung dieser
    Datei nur in Übereinstimmung mit der Lizenz erlaubt.
@@ -35,7 +35,7 @@ namespace ModbusTCP
 		ModbusTCPQueueElement(void);
 		~ModbusTCPQueueElement(void);
 
-		uint8_t address_ = 0x00;
+		uint8_t unitIdentifier_ = 0x00;
 		ModbusProt::ModbusPDU::SPtr req_;
 		ModbusProt::ModbusPDU::SPtr res_;
 		ModbusProt::ResponseCallback responseCallback_;

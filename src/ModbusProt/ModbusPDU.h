@@ -1,5 +1,5 @@
 /*
-   Copyright 2024 Kai Huebl (kai@huebl-sgh.de)
+   Copyright 2024-2025 Kai Huebl (kai@huebl-sgh.de)
 
    Lizenziert gemäß Apache Licence Version 2.0 (die „Lizenz“); Nutzung dieser
    Datei nur in Übereinstimmung mit der Lizenz erlaubt.
@@ -91,6 +91,7 @@ namespace ModbusProt
 
 		PDUFunction pduFunction(void);
 		PDUType pduType(void);
+		void pduType(PDUType pduType);
 
 		virtual bool encode(std::ostream& os) const;
 		virtual bool decode(std::istream& is);

@@ -23,29 +23,29 @@
 namespace ModbusProt
 {
 
-	ErrorRes::ErrorRes(PDUFunction pduFunction)
+	ErrorPDU::ErrorPDU(PDUFunction pduFunction)
 	: ModbusPDU(pduFunction, PDUType::Error)
 	{
 	}
 
-	ErrorRes::~ErrorRes(void)
+	ErrorPDU::~ErrorPDU(void)
 	{
 	}
 
 	void
-	ErrorRes::exceptionCode(uint8_t exceptionCode)
+	ErrorPDU::exceptionCode(uint8_t exceptionCode)
 	{
 		exceptionCode_ = exceptionCode;
 	}
 
 	uint8_t
-	ErrorRes::exceptionCode(void)
+	ErrorPDU::exceptionCode(void)
 	{
 		return exceptionCode_;
 	}
 
 	bool
-	ErrorRes::encode(std::ostream& os) const
+	ErrorPDU::encode(std::ostream& os) const
 	{
 		// Write PDU header to output stream
 		if (ModbusPDU::encode(os) == false) {
@@ -64,7 +64,7 @@ namespace ModbusProt
 	}
 
 	bool
-	ErrorRes::decode(std::istream& is)
+	ErrorPDU::decode(std::istream& is)
 	{
 		// Read data  from intput stream
 		try {

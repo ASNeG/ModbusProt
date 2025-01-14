@@ -260,14 +260,14 @@ namespace ModbusTCP
 		*sendBufferLen = 0;
 
 		// Get queue data
-		auto address = queueElement->address_;
+		auto unitIdentifier = queueElement->unitIdentifier_;
 		auto req = queueElement->req_;
 
 		// Encode data packet
 		ModbusTCP modbusTCPReq;
 		modbusTCPReq.modbusPDU(req);
 		modbusTCPReq.transactionIdentifier(transactionIdentifier);
-		modbusTCPReq.unitIdentifier(address);
+		modbusTCPReq.unitIdentifier(unitIdentifier);
 
 		ss.rdbuf()->pubsetbuf(sendBuffer.data(), sendBuffer.size());
 		bool rc = modbusTCPReq.encode(ss);
@@ -289,6 +289,7 @@ namespace ModbusTCP
 		ModbusTCP modbusTCPRes;
 		std::stringstream ss;
 
+		modbusTCPRes.pduType(ModbusProt::PDUType::Response);
 		ss.rdbuf()->pubsetbuf(recvBuffer.data(), recvBuffer.size());
 		bool rc = modbusTCPRes.decode(ss);
 		if (!rc) {
@@ -427,7 +428,7 @@ namespace ModbusTCP
 
 	asio::awaitable<void>
 	TCPClient::addToChannel(
-		uint8_t address,
+		uint8_t unitIdentifier,
 		ModbusProt::ModbusPDU::SPtr& req,
 		ModbusProt::ResponseCallback responseCallback
 	)
@@ -441,7 +442,7 @@ namespace ModbusTCP
 
 		// Add new packet to queue
 		auto qe = std::make_shared<ModbusTCPQueueElement>();
-		qe->address_ = address;
+		qe->unitIdentifier_ = unitIdentifier;
 		qe->req_ = req;
 		qe->res_ = nullptr;
 		qe->responseCallback_ = responseCallback;
@@ -457,13 +458,13 @@ namespace ModbusTCP
 
 	void
 	TCPClient::send(
-		uint8_t address,
+		uint8_t unitIdentifier,
 		ModbusProt::ModbusPDU::SPtr& req,
 		ModbusProt::ResponseCallback responseCallback
 	)
 	{
 		std::cout << "TCPClient::send" << std::endl;
-		co_spawn(ctx(), addToChannel(address, req, responseCallback), asio::detached);
+		co_spawn(ctx(), addToChannel(unitIdentifier, req, responseCallback), asio::detached);
 	}
 
 }

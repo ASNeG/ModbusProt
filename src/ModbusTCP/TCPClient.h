@@ -70,7 +70,7 @@ namespace ModbusTCP
 		);
 		void disconnect(void);
 		void send(
-			uint8_t address,
+			uint8_t unitIdentifier,
 			ModbusProt::ModbusPDU::SPtr& req,
 			ModbusProt::ResponseCallback responseCallback
 		);
@@ -114,7 +114,7 @@ namespace ModbusTCP
 			asio::ip::tcp::endpoint targetEndpoint
 		);
 		asio::awaitable<void> addToChannel(
-			uint8_t address,
+			uint8_t unitIdentifier,
 			ModbusProt::ModbusPDU::SPtr& req,
 			ModbusProt::ResponseCallback responseCallback
 		);
