@@ -63,6 +63,13 @@ namespace ModbusProt
 	}
 
 	bool
+	MemoryArea::checkAddress(uint16_t address, uint16_t numValues)
+	{
+		if (address < startAddress_  || address + numValues >= startAddress_ + numValues_) return false;
+		return false;
+	}
+
+	bool
 	MemoryArea::setValue(uint16_t address, uint8_t* value, uint16_t numValues)
 	{
 		if (address < startAddress_  || address + numValues >= startAddress_ + numValues_) return false;
@@ -237,6 +244,74 @@ namespace ModbusProt
 			}
 		}
 
+		return true;
+	}
+
+	bool
+	ModbusModel::checkType(MemoryType memoryType)
+	{
+		switch (memoryType) {
+			case MemoryType::Coils:
+			{
+				if (memoryAreaCoils_ == nullptr) return false;
+				break;
+			}
+			case MemoryType::Inputs:
+			{
+				if (memoryAreaInputs_ == nullptr) return false;
+				break;
+			}
+			case MemoryType::InputRegisters:
+			{
+				if (memoryAreaInputRegisters_ == nullptr) return false;
+				break;
+			}
+			case MemoryType::HoldingRegisters:
+			{
+				if (memoryAreaHoldingRegisters_ == nullptr) return false;
+				break;
+			}
+			default:
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+
+	bool
+	ModbusModel::checkAddress(MemoryType memoryType, uint16_t startAddress, uint16_t numValues)
+	{
+		switch (memoryType) {
+			case MemoryType::Coils:
+			{
+				if (memoryAreaCoils_ == nullptr) return false;
+				return memoryAreaCoils_->checkAddress(startAddress, numValues);
+				break;
+			}
+			case MemoryType::Inputs:
+			{
+				if (memoryAreaInputs_ == nullptr) return false;
+				return memoryAreaInputs_->checkAddress(startAddress, numValues);
+				break;
+			}
+			case MemoryType::InputRegisters:
+			{
+				if (memoryAreaInputRegisters_ == nullptr) return false;
+				return memoryAreaInputRegisters_->checkAddress(startAddress, numValues);
+				break;
+			}
+			case MemoryType::HoldingRegisters:
+			{
+				if (memoryAreaHoldingRegisters_ == nullptr) return false;
+				return memoryAreaHoldingRegisters_->checkAddress(startAddress, numValues);
+				break;
+			}
+			default:
+			{
+				return false;
+			}
+		}
 		return true;
 	}
 

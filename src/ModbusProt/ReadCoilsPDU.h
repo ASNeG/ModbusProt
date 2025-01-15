@@ -1,5 +1,5 @@
 /*
-   Copyright 2024 Kai Huebl (kai@huebl-sgh.de)
+   Copyright 2024-2025 Kai Huebl (kai@huebl-sgh.de)
 
    Lizenziert gemäß Apache Licence Version 2.0 (die „Lizenz“); Nutzung dieser
    Datei nur in Übereinstimmung mit der Lizenz erlaubt.
@@ -57,7 +57,9 @@ namespace ModbusProt
 
 		void reset(void);
 		uint8_t byteCount(void);
-		bool setCoilStatus(uint16_t  idx, bool value);
+		bool setCoilStatus(uint16_t count, uint8_t* value);
+		bool setCoilStatus(uint16_t idx, bool value);
+		bool getCoilStatus(uint16_t count, uint8_t* value);
 		bool getCoilStatus(uint16_t idx, bool& value);
 
 		virtual bool encode(std::ostream& os) const override;

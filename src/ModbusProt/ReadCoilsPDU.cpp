@@ -1,5 +1,5 @@
 /*
-   Copyright 2024 Kai Huebl (kai@huebl-sgh.de)
+   Copyright 2024-2025 Kai Huebl (kai@huebl-sgh.de)
 
    Lizenziert gemäß Apache Licence Version 2.0 (die „Lizenz“); Nutzung dieser
    Datei nur in Übereinstimmung mit der Lizenz erlaubt.
@@ -135,6 +135,13 @@ namespace ModbusProt
 	}
 
 	bool
+	ReadCoilsResPDU::setCoilStatus(uint16_t count, uint8_t* value)
+	{
+		// FIXME:
+		return true;
+	}
+
+	bool
 	ReadCoilsResPDU::setCoilStatus(uint16_t  idx, bool value)
 	{
 		// Check index
@@ -152,6 +159,13 @@ namespace ModbusProt
 		}
 		if (byteCount_ < byteIdx) byteCount_ = byteIdx;
 
+		return true;
+	}
+
+	bool
+	ReadCoilsResPDU::getCoilStatus(uint16_t count, uint8_t* value)
+	{
+		// FIXME:
 		return true;
 	}
 

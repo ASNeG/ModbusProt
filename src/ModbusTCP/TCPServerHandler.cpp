@@ -188,6 +188,17 @@ namespace ModbusTCP
 		return true;
 	}
 
+	ModbusProt::ErrorPDU::SPtr
+	TCPServerHandler::createErrorPDU(
+		ModbusProt::PDUFunction pduFunction,
+		ModbusProt::ErrorPDU::ExceptionCode ec
+	)
+	{
+		auto errorPDU = std::make_shared<ModbusProt::ErrorPDU>(pduFunction);
+		errorPDU->exceptionCode(ec);
+		return errorPDU;
+	}
+
 	bool
 	TCPServerHandler::handleModbusReq(
 		uint8_t unitIdentifier,
@@ -195,9 +206,7 @@ namespace ModbusTCP
 		ModbusProt::ModbusPDU::SPtr& res
 	)
 	{
-		ModbusProt::ErrorPDU::SPtr errorPDU = std::make_shared<ModbusProt::ErrorPDU>(req->pduFunction());
-		errorPDU->exceptionCode(ModbusProt::ErrorPDU::ExceptionCode::EC_FUNC_UNKNWON); // FIXME: Set correct exception code
-		res = errorPDU;
+		res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_FUNC_UNKNWON);
 		return true;
 	}
 

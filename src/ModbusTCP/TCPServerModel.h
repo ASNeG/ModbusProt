@@ -20,6 +20,7 @@
 
 #include <memory>
 
+#include "ModbusProt/ModbusModel.h"
 #include "ModbusTCP/TCPServerHandler.h"
 
 namespace ModbusTCP
@@ -41,11 +42,24 @@ namespace ModbusTCP
 			void
 		);
 
+		void addModbusModel(
+			ModbusProt::ModbusModel::SPtr modbusModel
+		);
+
 		bool handleModbusReq(
 			uint8_t unitIdentifier,
 			ModbusProt::ModbusPDU::SPtr& req,
 			ModbusProt::ModbusPDU::SPtr& res
 		) override;
+
+	  private:
+		ModbusProt::ModbusModel::SPtr modbusModel_ = nullptr;
+
+		bool handleCoilReq(
+			uint8_t unitIdentifier,
+			ModbusProt::ModbusPDU::SPtr& req,
+			ModbusProt::ModbusPDU::SPtr& res
+		);
 	};
 
 }

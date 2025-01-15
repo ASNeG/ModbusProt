@@ -17,6 +17,8 @@
 
 #include <asio.hpp>
 
+#include "ModbusProt/ReadCoilsPDU.h"
+#include "ModbusProt/ErrorPDU.h"
 #include "ModbusTCP/TCPServerModel.h"
 
 namespace ModbusTCP
@@ -43,6 +45,14 @@ namespace ModbusTCP
 	{
 	}
 
+	void
+	TCPServerModel::addModbusModel(
+		ModbusProt::ModbusModel::SPtr modbusModel
+	)
+	{
+		modbusModel_ = modbusModel;
+	}
+
 	bool
 	TCPServerModel::handleModbusReq(
 		uint8_t unitIdentifier,
@@ -50,7 +60,69 @@ namespace ModbusTCP
 		ModbusProt::ModbusPDU::SPtr& res
 	)
 	{
+		// check  if modbus model exist
+		if (modbusModel_ == nullptr) {
+			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_FUNC_UNKNWON);
+			return true;
+		}
+
+		// Handle coil
+		switch (req->pduFunction())
+		{
+			case ModbusProt::PDUFunction::ReadCoils:
+				return handleCoilReq(unitIdentifier, req, res);
+		}
+
+		// Create error response
+		res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_FUNC_UNKNWON);
 		return true;
 	}
 
+	bool
+	TCPServerModel::handleCoilReq(
+		uint8_t unitIdentifier,
+		ModbusProt::ModbusPDU::SPtr& req,
+		ModbusProt::ModbusPDU::SPtr& res
+	)
+	{
+		bool rc = true;
+		auto readCoilReq = std::static_pointer_cast<ModbusProt::ReadCoilsReqPDU>(req);
+
+		// Check if function exist
+		rc = modbusModel_->checkType(ModbusProt::MemoryType::Coils);
+		if (!rc) {
+			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_FUNC_UNKNWON);
+			return true;
+		}
+
+		// Check if address is valid
+		rc = modbusModel_->checkAddress(
+			ModbusProt::MemoryType::Coils,
+			readCoilReq->startingAddress(),
+			readCoilReq->quantityOfInputs()
+		);
+		if (!rc) {
+			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_ADDRESS_UNKNWON);
+			return true;
+		}
+
+		// Create modbus response
+		auto readCoilRes = std::make_shared<ModbusProt::ReadCoilsResPDU>();
+
+		// Get coil data from memory area
+		uint8_t value[MAX_BYTE_LEN];
+		rc = modbusModel_->getValue(
+			ModbusProt::MemoryType::Coils,
+			readCoilReq->startingAddress(),
+			value,
+			readCoilReq->quantityOfInputs()
+		);
+		if (!rc) {
+			res = TCPServerHandler::createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_PROCESSING_ERROR);
+			return true;
+		}
+		readCoilRes->setCoilStatus(readCoilReq->quantityOfInputs(), value);
+
+		return true;
+	}
 }

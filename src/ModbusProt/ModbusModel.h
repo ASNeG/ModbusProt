@@ -42,6 +42,7 @@ namespace ModbusProt
 		);
 		~MemoryArea(void);
 
+		bool checkAddress(uint16_t address, uint16_t numValues);
 		bool setValue(uint16_t address, uint8_t* value, uint16_t numValues);
 		bool getValue(uint16_t address, uint8_t* value, uint16_t numValues);
 
@@ -62,6 +63,8 @@ namespace ModbusProt
 
 	class ModbusModel {
 	  public:
+		using SPtr = std::shared_ptr<ModbusModel>;
+
 		ModbusModel(void);
 		virtual ~ModbusModel(void);
 
@@ -71,6 +74,8 @@ namespace ModbusProt
 			uint16_t startAddress,
 			uint16_t numValues
 		);
+		bool checkType(MemoryType memoryType);
+		bool checkAddress(MemoryType memoryType, uint16_t startAddress, uint16_t numValues);
 		bool setValue(MemoryType memoryType, uint16_t startAddress, uint8_t* values, uint16_t numValues);
 		bool getValue(MemoryType memoryType, uint16_t startAddress, uint8_t* values, uint16_t numValues);
 

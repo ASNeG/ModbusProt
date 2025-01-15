@@ -23,6 +23,7 @@
 
 #include "ModbusTCP/ModbusTCP.h"
 #include "ModbusTCP/TCPBase.h"
+#include "ModbusProt/ErrorPDU.h"
 
 namespace ModbusTCP
 {
@@ -63,7 +64,13 @@ namespace ModbusTCP
 			ModbusProt::ModbusPDU::SPtr& res
 		);
 
-	  private:
+	  protected:
+		ModbusProt::ErrorPDU::SPtr createErrorPDU(
+			ModbusProt::PDUFunction pduFunction,
+			ModbusProt::ErrorPDU::ExceptionCode ec
+		);
+
+      private:
 		uint32_t recvTimeout_ = 5000;
 		uint32_t sendTimeout_ = 5000;
 
