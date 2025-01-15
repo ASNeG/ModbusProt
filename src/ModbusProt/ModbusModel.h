@@ -65,6 +65,7 @@ namespace ModbusProt
 		ModbusModel(void);
 		virtual ~ModbusModel(void);
 
+		bool registerMemoryAreaDefaults(void);
 		bool registerMemoryArea(
 			MemoryType memoryType,
 			uint16_t startAddress,

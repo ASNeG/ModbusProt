@@ -15,6 +15,8 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
+#include <string.h>
+
 #include "ModbusProt/ModbusModel.h"
 
 namespace ModbusProt
@@ -42,6 +44,7 @@ namespace ModbusProt
 
 		memLen_ = ((numValues_ * valueSizeBits_) + 7) / 8;
 		memData_ = (char*)malloc(memLen_);
+		memset(memData_, 0x00, memLen_);
 	}
 
 	MemoryArea::~MemoryArea(void)
@@ -157,6 +160,25 @@ namespace ModbusProt
 
 	ModbusModel::~ModbusModel(void)
 	{
+	}
+
+	bool
+	ModbusModel::registerMemoryAreaDefaults(void)
+	{
+		if (!registerMemoryArea(MemoryType::Coils, 1, 9999)) {
+			return false;
+		}
+		if (!registerMemoryArea(MemoryType::Inputs, 10001, 19999)) {
+			return false;
+		}
+		if (!registerMemoryArea(MemoryType::InputRegisters, 30001, 39999)) {
+			return false;
+		}
+		if (!registerMemoryArea(MemoryType::HoldingRegisters, 40001, 49999)) {
+			return false;
+		}
+
+		return true;
 	}
 
 	bool
