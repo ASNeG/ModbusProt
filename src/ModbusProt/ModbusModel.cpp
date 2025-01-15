@@ -16,6 +16,7 @@
  */
 
 #include <string.h>
+#include <iostream>
 
 #include "ModbusProt/ModbusModel.h"
 
@@ -39,8 +40,12 @@ namespace ModbusProt
 		startAddress_ = startAddress;
 		numValues_ = numValues;
 
-		if (memoryType_ == MemoryType::Coils || memoryType == MemoryType::Inputs) valueSizeBits_ = 1;
-		valueSizeBits_ = 16;
+		if (memoryType_ == MemoryType::Coils || memoryType == MemoryType::Inputs) {
+			valueSizeBits_ = 1;
+		}
+		else {
+			valueSizeBits_ = 16;
+		}
 
 		memLen_ = ((numValues_ * valueSizeBits_) + 7) / 8;
 		memData_ = (char*)malloc(memLen_);
@@ -63,9 +68,12 @@ namespace ModbusProt
 		if (address < startAddress_  || address + numValues >= startAddress_ + numValues_) return false;
 
 		if (valueSizeBits_ == 1) {
-			bool* val = (bool*)value;
 			for (uint16_t idx = 0; idx < numValues; idx++) {
-				setValue(address+idx, val[idx]);
+				uint16_t offset = idx / 8;
+				uint8_t rest = 7 - (idx % 8);
+
+				bool boolVal = (value[offset] & (1 << rest)) != 0;
+				setValue(address+idx, boolVal);
 			}
 		}
 		else {
@@ -84,9 +92,19 @@ namespace ModbusProt
 		if (address < startAddress_  || address + numValues >= startAddress_ + numValues_) return false;
 
 		if (valueSizeBits_ == 1) {
-			bool* val = (bool*)value;
 			for (uint16_t idx = 0; idx < numValues; idx++) {
-				getValue(address+idx, val[idx]);
+				uint16_t offset = idx / 8;
+				uint8_t rest = 7-(idx % 8);
+
+				bool boolVal = 0;
+				getValue(address+idx, boolVal);
+
+				if (boolVal == true) {
+					value[offset] |= (1 << rest);
+				}
+				else {
+					value[offset] &= ~(1 << rest);
+				}
 			}
 		}
 		else {
