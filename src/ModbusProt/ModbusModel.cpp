@@ -77,7 +77,7 @@ namespace ModbusProt
 		if (valueSizeBits_ == 1) {
 			for (uint16_t idx = 0; idx < numValues; idx++) {
 				uint16_t offset = idx / 8;
-				uint8_t rest = 7 - (idx % 8);
+				uint8_t rest = idx % 8;
 
 				bool boolVal = (value[offset] & (1 << rest)) != 0;
 				setValue(address+idx, boolVal);
@@ -101,7 +101,7 @@ namespace ModbusProt
 		if (valueSizeBits_ == 1) {
 			for (uint16_t idx = 0; idx < numValues; idx++) {
 				uint16_t offset = idx / 8;
-				uint8_t rest = 7-(idx % 8);
+				uint8_t rest = idx % 8;
 
 				bool boolVal = 0;
 				getValue(address+idx, boolVal);

@@ -25,9 +25,14 @@ namespace TestModbusModel
 
     	memset((char*)&data, 0x00, 3);
         CPUNIT_ASSERT(modbusModel.getValue(ModbusProt::MemoryType::Coils, 2, data, 24) == true);
-        CPUNIT_ASSERT(data[0] == 0b00110011);
-        CPUNIT_ASSERT(data[1] == 0b00110111);
-        CPUNIT_ASSERT(data[2] == 0b00110010);
+        CPUNIT_ASSERT(data[0] == 0b11001100);
+        CPUNIT_ASSERT(data[1] == 0b11001101);
+        CPUNIT_ASSERT(data[2] == 0b01001100);
+
+    	memset((char*)&data, 0x00, 3);
+        CPUNIT_ASSERT(modbusModel.getValue(ModbusProt::MemoryType::Coils, 4, data, 9) == true);
+        CPUNIT_ASSERT(data[0] == 0b01110011);
+        CPUNIT_ASSERT(data[1] == 0b00000001);
 	}
 
     CPUNIT_TEST(TestModbusModel, inputs)
@@ -46,9 +51,9 @@ namespace TestModbusModel
 
     	memset((char*)&data, 0x00, 3);
         CPUNIT_ASSERT(modbusModel.getValue(ModbusProt::MemoryType::Inputs, 10002, data, 24) == true);
-        CPUNIT_ASSERT(data[0] == 0b00110011);
-        CPUNIT_ASSERT(data[1] == 0b00110111);
-        CPUNIT_ASSERT(data[2] == 0b00110010);
+        CPUNIT_ASSERT(data[0] == 0b11001100);
+        CPUNIT_ASSERT(data[1] == 0b11001101);
+        CPUNIT_ASSERT(data[2] == 0b01001100);
 	}
 
     CPUNIT_TEST(TestModbusModel, inputRegisters)
