@@ -55,7 +55,12 @@ namespace ModbusTCP
 	  private:
 		ModbusProt::ModbusModel::SPtr modbusModel_ = nullptr;
 
-		bool handleCoilReq(
+		bool handleReadCoilsReq(
+			uint8_t unitIdentifier,
+			ModbusProt::ModbusPDU::SPtr& req,
+			ModbusProt::ModbusPDU::SPtr& res
+		);
+		bool handleWriteSingleCoilReq(
 			uint8_t unitIdentifier,
 			ModbusProt::ModbusPDU::SPtr& req,
 			ModbusProt::ModbusPDU::SPtr& res

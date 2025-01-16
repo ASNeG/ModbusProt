@@ -18,6 +18,7 @@
 #include <asio.hpp>
 
 #include "ModbusProt/ReadCoilsPDU.h"
+#include "ModbusProt/WriteSingleCoilPDU.h"
 #include "ModbusProt/ErrorPDU.h"
 #include "ModbusTCP/TCPServerModel.h"
 
@@ -70,7 +71,9 @@ namespace ModbusTCP
 		switch (req->pduFunction())
 		{
 			case ModbusProt::PDUFunction::ReadCoils:
-				return handleCoilReq(unitIdentifier, req, res);
+				return handleReadCoilsReq(unitIdentifier, req, res);
+			case ModbusProt::PDUFunction::WriteSingleCoil:
+				return handleWriteSingleCoilReq(unitIdentifier, req, res);
 		}
 
 		// Create error response
@@ -79,7 +82,7 @@ namespace ModbusTCP
 	}
 
 	bool
-	TCPServerModel::handleCoilReq(
+	TCPServerModel::handleReadCoilsReq(
 		uint8_t unitIdentifier,
 		ModbusProt::ModbusPDU::SPtr& req,
 		ModbusProt::ModbusPDU::SPtr& res
@@ -125,4 +128,55 @@ namespace ModbusTCP
 
 		return true;
 	}
+
+	bool
+	TCPServerModel::handleWriteSingleCoilReq(
+		uint8_t unitIdentifier,
+		ModbusProt::ModbusPDU::SPtr& req,
+		ModbusProt::ModbusPDU::SPtr& res
+	)
+	{
+		bool rc = true;
+		auto writeSingleCoilReq = std::static_pointer_cast<ModbusProt::WriteSingleCoilReqPDU>(req);
+
+		// Check if function exist
+		rc = modbusModel_->checkType(ModbusProt::MemoryType::Coils);
+		if (!rc) {
+			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_FUNC_UNKNWON);
+			return true;
+		}
+
+		// Check if address is valid
+		rc = modbusModel_->checkAddress(
+			ModbusProt::MemoryType::Coils,
+			writeSingleCoilReq->address(),
+			1
+		);
+		if (!rc) {
+			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_ADDRESS_UNKNWON);
+			return true;
+		}
+
+		// Create modbus response
+		auto writeSingleCoilRes = std::make_shared<ModbusProt::WriteSingleCoilResPDU>();
+
+		// Get coil data from memory area
+		uint8_t value;
+		rc = modbusModel_->getValue(
+			ModbusProt::MemoryType::Coils,
+			writeSingleCoilReq->address(),
+			&value,
+			1
+		);
+		if (!rc) {
+			res = TCPServerHandler::createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_PROCESSING_ERROR);
+			return true;
+		}
+		if ((value & 0x80) == 0x80) writeSingleCoilRes->value(true);
+		else writeSingleCoilRes->value(false);
+		writeSingleCoilRes->address(writeSingleCoilRes->address());
+
+		return true;
+	}
+
 }

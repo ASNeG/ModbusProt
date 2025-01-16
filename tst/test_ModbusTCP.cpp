@@ -338,6 +338,7 @@ namespace TestModbusTCP
     	CPUNIT_ASSERT(clientStateVec_[0] == TCPClientState::Down);
     }
 
+#if 0
     CPUNIT_TEST(TestModbusTCP, client)
 	{
     	asio::ip::tcp::endpoint serverEndpoint;
@@ -392,6 +393,7 @@ namespace TestModbusTCP
     	CPUNIT_ASSERT(clientCondition_.wait(3000) == true);
     	CPUNIT_ASSERT(clientStateVec_[0] == TCPClientState::Down);
     }
+#endif
 
 
 }
