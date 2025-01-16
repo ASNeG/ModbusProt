@@ -19,6 +19,7 @@
 
 #include "ErrorPDU.h"
 #include "ReadCoilsPDU.h"
+#include "WriteSingleCoilPDU.h"
 
 namespace ModbusProt
 {
@@ -34,6 +35,10 @@ namespace ModbusProt
 			case static_cast<int>(PDUFunction::ReadCoils):
 				if (pduType == PDUType::Request) return std::make_shared<ReadCoilsReqPDU>();
 				else return std::make_shared<ReadCoilsResPDU>();
+				break;
+			case static_cast<int>(PDUFunction::WriteSingleCoil):
+				if (pduType == PDUType::Request) return std::make_shared<WriteSingleCoilReqPDU>();
+				else return std::make_shared<WriteSingleCoilResPDU>();
 				break;
 			default:
 				return nullptr;

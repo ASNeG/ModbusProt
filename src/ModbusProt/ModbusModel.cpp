@@ -66,7 +66,7 @@ namespace ModbusProt
 	MemoryArea::checkAddress(uint16_t address, uint16_t numValues)
 	{
 		if (address < startAddress_  || address + numValues >= startAddress_ + numValues_) return false;
-		return false;
+		return true;
 	}
 
 	bool

@@ -138,18 +138,6 @@ namespace ModbusProt
 		byte_t inputRegisters_[MAX_BYTE_LEN];
 	};
 
-	class WriteSingleCoilReq {
-	  public:
-		uint16_t outputAddress_ = 0x00;
-		uint16_t outputValue_ = 0x00;
-	};
-
-	class WriteSingleCoilRes {
-	  public:
-		uint16_t ouputAddress_ =  0x00;
-		uint16_t outputValue_ = 0x00;
-	};
-
 	class WriteSingleHoldingReq {
 	  public:
 		uint16_t registerAddress_ = 0x00;

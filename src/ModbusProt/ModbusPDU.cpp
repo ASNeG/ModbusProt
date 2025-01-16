@@ -24,7 +24,8 @@ namespace ModbusProt
 {
 
 	ModbusPDU::FuncCodeMap funcCodeMap_ = {
-		{ PDUFunction::ReadCoils, 0x01 }
+		{ PDUFunction::ReadCoils, 0x01 },
+		{ PDUFunction::WriteSingleCoil, 0x05 }
 	};
 
 

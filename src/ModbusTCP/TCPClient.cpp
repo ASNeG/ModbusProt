@@ -199,12 +199,14 @@ namespace ModbusTCP
 		bool error = false;
 		if (result.index() == 1) {
 			// timed out
+			std::cout << "timeout" << std::endl;
 			error = true;
 		}
 		else {
 			auto [e, n] = std::get<0>(result);
 			*recvBufferLen = n;
 			if (e) {
+				std::cout << "socket error" << std::endl;
 				// Send error
 				error = true;
 			}
@@ -344,12 +346,12 @@ namespace ModbusTCP
 				// Send modbus pdu to server
 				rc = co_await sendToServer(sendBuffer, sendBufferLen);
 				if (!rc) {
+
 					qe->responseCallback_(ModbusProt::ModbusError::ConnectionError, qe->req_, qe->res_);
 					if (reconnectTimeout_ == 0) co_return;
 					continue;
 				}
 
-				std::cout << "AAAAAAAAAAAAAAAAAA1" << std::endl;
 				// Receive modbus pdu from server
 				std::array<char, 512> recvBuffer;
 				uint32_t recvBufferLen = 512;
@@ -359,7 +361,6 @@ namespace ModbusTCP
 					if (reconnectTimeout_ == 0) co_return;
 					continue;
 				}
-				std::cout << "AAAAAAAAAAAAAAAAAA2" << std::endl;
 
 				// Decode modbus pdu to modbus data
 				rc = decode(qe, recvBuffer, recvBufferLen);

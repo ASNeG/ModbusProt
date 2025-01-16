@@ -138,9 +138,9 @@ namespace ModbusProt
 	ReadCoilsResPDU::setCoilStatus(uint16_t count, uint8_t* value)
 	{
 		// Check max index
-		if (count > MAX_BYTE_LEN * 8) return false;
+		if (count == 0 || count > MAX_BYTE_LEN * 8) return false;
 
-		byteCount_ = (count/8) + 1;
+		byteCount_ = ((count-1)/8) + 1;
 		memcpy(coilStatus_, value, byteCount_);
 		return true;
 	}
@@ -149,11 +149,11 @@ namespace ModbusProt
 	ReadCoilsResPDU::setCoilStatus(uint16_t  idx, bool value)
 	{
 		// Check index
-		if (idx > MAX_BYTE_LEN * 8) return false;
+		if (idx >= MAX_BYTE_LEN * 8) return false;
 
 		// Set coil status
 		uint8_t byteIdx = idx / 8;
-		uint8_t posIdx = 7 - (idx % 8);
+		uint8_t posIdx = idx % 8;
 
 		if (value == true) {
 			coilStatus_[byteIdx] = coilStatus_[byteIdx] | 1 << posIdx;
@@ -170,10 +170,11 @@ namespace ModbusProt
 	ReadCoilsResPDU::getCoilStatus(uint16_t count, uint8_t* value)
 	{
 		// Check max index
+		if (count == 0) return false;
 		if (count > MAX_BYTE_LEN * 8) return false;
 		if (count >= byteCount_ * 8) return false;
 
-		uint8_t byteCount = (count/8) + 1;
+		uint8_t byteCount = ((count-1)/8) + 1;
 		memcpy(value, coilStatus_, byteCount);
 
 		return true;
@@ -188,7 +189,7 @@ namespace ModbusProt
 
 		// Get coil status
 		uint8_t byteIdx = idx / 8;
-		uint8_t posIdx = 7 - (idx % 8);
+		uint8_t posIdx = idx % 8;
 
 		uint8_t byte = 1 << byteIdx;
 		value = ((coilStatus_[byteIdx] & byte) == byte);

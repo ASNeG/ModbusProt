@@ -142,6 +142,7 @@ namespace ModbusTCP
 		// Check if function exist
 		rc = modbusModel_->checkType(ModbusProt::MemoryType::Coils);
 		if (!rc) {
+
 			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_FUNC_UNKNWON);
 			return true;
 		}
@@ -153,6 +154,7 @@ namespace ModbusTCP
 			1
 		);
 		if (!rc) {
+			std::cout << "ERROR ADDR" << (uint32_t)writeSingleCoilReq->address() << std::endl;
 			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_ADDRESS_UNKNWON);
 			return true;
 		}
@@ -160,9 +162,10 @@ namespace ModbusTCP
 		// Create modbus response
 		auto writeSingleCoilRes = std::make_shared<ModbusProt::WriteSingleCoilResPDU>();
 
-		// Get coil data from memory area
-		uint8_t value;
-		rc = modbusModel_->getValue(
+		// Set coil data to memory area
+		uint8_t value = 0x00;
+		if (writeSingleCoilReq->value() == true) value = 0x80;
+		rc = modbusModel_->setValue(
 			ModbusProt::MemoryType::Coils,
 			writeSingleCoilReq->address(),
 			&value,
@@ -174,7 +177,8 @@ namespace ModbusTCP
 		}
 		if ((value & 0x80) == 0x80) writeSingleCoilRes->value(true);
 		else writeSingleCoilRes->value(false);
-		writeSingleCoilRes->address(writeSingleCoilRes->address());
+		writeSingleCoilRes->address(writeSingleCoilReq->address());
+		res = writeSingleCoilRes;
 
 		return true;
 	}
