@@ -161,7 +161,7 @@ namespace ModbusProt
 		else {
 			coilStatus_[byteIdx] = coilStatus_[byteIdx] & ~(1 << posIdx);
 		}
-		if (byteCount_ < byteIdx+1) byteCount_ = byteIdx+1;
+		if (byteCount_ < (byteIdx+1)) byteCount_ = byteIdx+1;
 
 		return true;
 	}
@@ -191,7 +191,7 @@ namespace ModbusProt
 		uint8_t byteIdx = idx / 8;
 		uint8_t posIdx = idx % 8;
 
-		uint8_t byte = 1 << byteIdx;
+		uint8_t byte = 1 << posIdx;
 		value = ((coilStatus_[byteIdx] & byte) == byte);
 
 		return true;

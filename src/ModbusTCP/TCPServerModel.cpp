@@ -114,6 +114,7 @@ namespace ModbusTCP
 
 		// Get coil data from memory area
 		uint8_t value[MAX_BYTE_LEN];
+		memset((char*)&value, 0x00, MAX_BYTE_LEN);
 		rc = modbusModel_->getValue(
 			ModbusProt::MemoryType::Coils,
 			readCoilReq->startingAddress(),
@@ -126,6 +127,7 @@ namespace ModbusTCP
 		}
 		readCoilRes->setCoilStatus(readCoilReq->quantityOfInputs(), value);
 
+		res = readCoilRes;
 		return true;
 	}
 
@@ -154,17 +156,16 @@ namespace ModbusTCP
 			1
 		);
 		if (!rc) {
-			std::cout << "ERROR ADDR" << (uint32_t)writeSingleCoilReq->address() << std::endl;
 			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_ADDRESS_UNKNWON);
 			return true;
 		}
 
-		// Create modbus response
+		// Create write single coil response
 		auto writeSingleCoilRes = std::make_shared<ModbusProt::WriteSingleCoilResPDU>();
 
 		// Set coil data to memory area
 		uint8_t value = 0x00;
-		if (writeSingleCoilReq->value() == true) value = 0x80;
+		if (writeSingleCoilReq->value() == true) value = 0x01;
 		rc = modbusModel_->setValue(
 			ModbusProt::MemoryType::Coils,
 			writeSingleCoilReq->address(),
@@ -175,8 +176,7 @@ namespace ModbusTCP
 			res = TCPServerHandler::createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_PROCESSING_ERROR);
 			return true;
 		}
-		if ((value & 0x80) == 0x80) writeSingleCoilRes->value(true);
-		else writeSingleCoilRes->value(false);
+		writeSingleCoilRes->value(writeSingleCoilReq->value());
 		writeSingleCoilRes->address(writeSingleCoilReq->address());
 		res = writeSingleCoilRes;
 

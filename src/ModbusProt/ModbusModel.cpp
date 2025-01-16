@@ -110,7 +110,7 @@ namespace ModbusProt
 					value[offset] |= (1 << rest);
 				}
 				else {
-					value[offset] &= ~(1 << rest);
+					value[offset] &= (~(1 << rest));
 				}
 			}
 		}

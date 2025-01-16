@@ -100,11 +100,15 @@ namespace ModbusTCP
 	ModbusTCP::encode(std::ostream& os) const
 	{
 		// check parameter
-		if (modbusPDU_ == nullptr) return false;
+		if (modbusPDU_ == nullptr) {
+			return false;
+		}
 
 		// Get length of PDU
 		std::stringstream ss;
-		if (!modbusPDU_->encode(ss)) return false;
+		if (!modbusPDU_->encode(ss)) {
+			return false;
+		}
 		ss.seekg(0, std::ios::end);
 		*(const_cast<uint16_t*>(&length_)) = ss.tellg();
 		ss.seekg(0, std::ios::beg);
@@ -127,7 +131,9 @@ namespace ModbusTCP
 		}
 
 		// Encode modbus PDU data
-		if (!modbusPDU_->encode(os)) return false;
+		if (!modbusPDU_->encode(os)) {
+			return false;
+		}
 
 		return true;
 	}
