@@ -8,6 +8,7 @@
 #include "ModbusTCP/TCPServerModel.h"
 #include "ModbusProt/ReadCoilsPDU.h"
 #include "ModbusProt/WriteSingleCoilPDU.h"
+#include "ModbusProt/WriteMultipleCoilsPDU.h"
 #include "Condition.h"
 
 namespace TestModbusTCP_Coil
@@ -129,6 +130,113 @@ namespace TestModbusTCP_Coil
     		CPUNIT_ASSERT(writeSingleCoilRes->address() == address);
     		CPUNIT_ASSERT(writeSingleCoilRes->value() == (address % 3 == 0 ? true : false));
     	}
+
+    	// Read coil request (single bit)
+    	for (uint16_t address = 1; address < 100; address++) {
+    		responseCondition_.init();
+
+    		// Create and send read coil request
+    		auto readCoilsReq = std::make_shared<ModbusProt::ReadCoilsReqPDU>();
+    		readCoilsReq->startingAddress(address);
+    		readCoilsReq->quantityOfInputs(1);
+    		ModbusProt::ModbusPDU::SPtr req = readCoilsReq;
+    		client.send(0, req, responseCallback);
+    		CPUNIT_ASSERT(responseCondition_.wait(3000) == true);
+
+    		// Receive and check write single coil response
+    		CPUNIT_ASSERT(modbusError_ == ModbusProt::ModbusError::Ok);
+    		CPUNIT_ASSERT(res_ != nullptr);
+    		CPUNIT_ASSERT(res_->pduType() == ModbusProt::PDUType::Response);
+    		CPUNIT_ASSERT(req_->pduFunction() == ModbusProt::PDUFunction::ReadCoils);
+
+    		// Check contents of write single coil response
+    		auto readCoilsRes = std::static_pointer_cast<ModbusProt::ReadCoilsResPDU>(res_);
+    		CPUNIT_ASSERT(readCoilsRes->byteCount() == 1);
+    		uint8_t b; CPUNIT_ASSERT(readCoilsRes->getCoilStatus(1, &b) == true);
+    		CPUNIT_ASSERT(b == (address % 3 == 0 ? 0x01 : 0x00));
+    	}
+
+    	// Read coil request (all bits)
+    	responseCondition_.init();
+
+    	// Create and send read coil request
+    	auto readCoilsReq = std::make_shared<ModbusProt::ReadCoilsReqPDU>();
+    	readCoilsReq->startingAddress(1);
+    	readCoilsReq->quantityOfInputs(100);
+    	ModbusProt::ModbusPDU::SPtr req = readCoilsReq;
+    	client.send(0, req, responseCallback);
+    	CPUNIT_ASSERT(responseCondition_.wait(3000) == true);
+
+    	// Receive and check write single coil response
+    	CPUNIT_ASSERT(modbusError_ == ModbusProt::ModbusError::Ok);
+    	CPUNIT_ASSERT(res_ != nullptr);
+    	CPUNIT_ASSERT(res_->pduType() == ModbusProt::PDUType::Response);
+    	CPUNIT_ASSERT(req_->pduFunction() == ModbusProt::PDUFunction::ReadCoils);
+
+    	// Check contents of write single coil response
+    	auto readCoilsRes = std::static_pointer_cast<ModbusProt::ReadCoilsResPDU>(res_);
+    	CPUNIT_ASSERT(readCoilsRes->byteCount() == ((99/8)+1));
+    	for (uint16_t idx = 0; idx < 99; idx++) {
+    		bool b; CPUNIT_ASSERT(readCoilsRes->getCoilStatus(idx, b) == true);
+    	}
+
+    	uint8_t value[MAX_BYTE_LEN];
+    	memset((char*)&value, 0x00, MAX_BYTE_LEN);
+    	CPUNIT_ASSERT(readCoilsRes->getCoilStatus(99, value) == true);
+    	for (uint16_t idx = 0; idx < 99; idx++) {
+    		uint8_t offset = idx / 8;
+    		uint8_t rest = idx % 8;
+    		bool b = (value[offset] & (1<<rest)) != 0;
+    		CPUNIT_ASSERT(b == ((idx+1) % 3 == 0 ? true : false));
+    	}
+    }
+
+    CPUNIT_TEST(TestModbusTCP_Coil, write_multiple_coil)
+	{
+    	asio::ip::tcp::endpoint serverEndpoint;
+
+    	// Create server object
+    	TCPServer server;
+    	CPUNIT_ASSERT(server.getEndpoint(serverIP, serverPort1, serverEndpoint) == true);
+
+    	// Open server acceptor
+    	CPUNIT_ASSERT(server.open(serverEndpoint, acceptCallbackOK) == true);
+
+    	// Create client object
+    	TCPClient client;
+    	CPUNIT_ASSERT(client.getEndpoint(serverIP, serverPort1, serverEndpoint) == true);
+
+    	// Client connect to server
+    	clientCondition_.init();
+    	clientStateVec_.clear();
+    	clientNumberStates_ = 2;
+    	client.connect(serverEndpoint, clientConnectionStateCallback);
+    	CPUNIT_ASSERT(clientCondition_.wait(3000) == true);
+
+    	CPUNIT_ASSERT(clientStateVec_[0] == TCPClientState::Connecting);
+    	CPUNIT_ASSERT(clientStateVec_[1] == TCPClientState::Connected);
+
+		// Create and send write multiple coil request
+		auto writeMultipleCoilsReq = std::make_shared<ModbusProt::WriteMultipleCoilsReqPDU>();
+		writeMultipleCoilsReq->startingAddress(1);
+		writeMultipleCoilsReq->quantityOfOutputs(100);
+		for (uint16_t address = 1; address < 100; address++) {
+			writeMultipleCoilsReq->setOutputsValue(address-1, address % 3 == 0 ? true : false);
+		}
+		ModbusProt::ModbusPDU::SPtr req0 = writeMultipleCoilsReq;
+		client.send(0, req0, responseCallback);
+		CPUNIT_ASSERT(responseCondition_.wait(3000) == true);
+
+		// Receive and check write single coil response
+		CPUNIT_ASSERT(modbusError_ == ModbusProt::ModbusError::Ok);
+		CPUNIT_ASSERT(res_ != nullptr);
+		CPUNIT_ASSERT(res_->pduType() == ModbusProt::PDUType::Response);
+		CPUNIT_ASSERT(req_->pduFunction() == ModbusProt::PDUFunction::WriteMultipleCoils);
+
+		// Check contents of write single coil response
+		auto writeMultipleCoilsRes = std::static_pointer_cast<ModbusProt::WriteMultipleCoilsResPDU>(res_);
+		CPUNIT_ASSERT(writeMultipleCoilsRes->startingAddress() == 1);
+		CPUNIT_ASSERT(writeMultipleCoilsRes->quantityOfOutputs() == 100);
 
     	// Read coil request (single bit)
     	for (uint16_t address = 1; address < 100; address++) {
