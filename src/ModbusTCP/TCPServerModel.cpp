@@ -22,6 +22,7 @@
 #include "ModbusProt/WriteMultipleCoilsPDU.h"
 #include "ModbusProt/ErrorPDU.h"
 #include "ModbusTCP/TCPServerModel.h"
+#include "ModbusProt/ReadDiscreteInputsPDU.h"
 
 namespace ModbusTCP
 {
@@ -78,6 +79,8 @@ namespace ModbusTCP
 				return handleWriteSingleCoilReq(unitIdentifier, req, res);
 			case ModbusProt::PDUFunction::WriteMultipleCoils:
 				return handleWriteMultipleCoilsReq(unitIdentifier, req, res);
+			case ModbusProt::PDUFunction::ReadDiscreteInputs:
+				return handleReadDiscreteInputsReq(unitIdentifier, req, res);
 		}
 
 		// Create error response
@@ -265,6 +268,66 @@ namespace ModbusTCP
 		writeMultipleCoilsRes->startingAddress(writeMultipleCoilsReq->startingAddress());
 		res = writeMultipleCoilsRes;
 
+		return true;
+	}
+
+	bool
+	TCPServerModel::handleReadDiscreteInputsReq(
+		uint8_t unitIdentifier,
+		ModbusProt::ModbusPDU::SPtr& req,
+		ModbusProt::ModbusPDU::SPtr& res
+	)
+	{
+		bool rc = true;
+		auto readDiscreteInputsReq = std::static_pointer_cast<ModbusProt::ReadDiscreteInputsReqPDU>(req);
+		logHandler_->logList(Base::LogLevel::Debug, {"handle read discrete inputs request"});
+
+		// Check if function exist
+		rc = modbusModel_->checkType(ModbusProt::MemoryType::Inputs);
+		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {"memory model not exist"});
+			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_FUNC_UNKNWON);
+			return true;
+		}
+
+		// Check if address is valid
+		rc = modbusModel_->checkAddress(
+			ModbusProt::MemoryType::Inputs,
+			readDiscreteInputsReq->startingAddress(),
+			readDiscreteInputsReq->quantityOfInputs()
+		);
+		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {
+				"starting address", std::to_string(readDiscreteInputsReq->startingAddress()),
+				"with range", std::to_string(readDiscreteInputsReq->quantityOfInputs()),
+				"not exist"
+			});
+			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_ADDRESS_UNKNWON);
+			return true;
+		}
+
+		// Create modbus response
+		auto readDiscreteInputsRes = std::make_shared<ModbusProt::ReadDiscreteInputsResPDU>();
+
+		// Get coil data from memory area
+		uint8_t value[MAX_BYTE_LEN];
+		memset((char*)&value, 0x00, MAX_BYTE_LEN);
+		rc = modbusModel_->getValue(
+			ModbusProt::MemoryType::Inputs,
+			readDiscreteInputsReq->startingAddress(),
+			value,
+			readDiscreteInputsReq->quantityOfInputs()
+		);
+		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {
+				"processing read discrete inputs request error"
+			});
+			res = TCPServerHandler::createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_PROCESSING_ERROR);
+			return true;
+		}
+		readDiscreteInputsRes->setInputStatus(readDiscreteInputsReq->quantityOfInputs(), value);
+
+		res = readDiscreteInputsRes;
 		return true;
 	}
 

@@ -126,12 +126,6 @@ namespace ModbusTCP
 		uint32_t sendBufferLen
 	)
 	{
-		std::cout << "SEND **************************** " << sendBufferLen << std::endl;
-		for (uint32_t idx = 0; idx < sendBufferLen; idx++) {
-			std::cout << " " << std::hex << (uint32_t)sendBuffer[idx];
-		}
-		std::cout << std::endl;
-
 		// Send modbus pdu to server
 		auto result = co_await(
 			async_write(*socket_, asio::buffer(sendBuffer, sendBufferLen), use_nothrow_awaitable) ||
