@@ -220,7 +220,7 @@ namespace TestModbusTCP_Coil
 		auto writeMultipleCoilsReq = std::make_shared<ModbusProt::WriteMultipleCoilsReqPDU>();
 		writeMultipleCoilsReq->startingAddress(1);
 		writeMultipleCoilsReq->quantityOfOutputs(100);
-		for (uint16_t address = 1; address < 100; address++) {
+		for (uint16_t address = 1; address <= 100; address++) {
 			writeMultipleCoilsReq->setOutputsValue(address-1, address % 3 == 0 ? true : false);
 		}
 		ModbusProt::ModbusPDU::SPtr req0 = writeMultipleCoilsReq;

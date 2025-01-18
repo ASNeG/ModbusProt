@@ -53,6 +53,7 @@ namespace ModbusTCP
 		) override;
 
 	  private:
+
 		ModbusProt::ModbusModel::SPtr modbusModel_ = nullptr;
 
 		bool handleReadCoilsReq(

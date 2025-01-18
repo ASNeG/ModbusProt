@@ -181,7 +181,7 @@ namespace ModbusProt
 
 			is.read((char*)&byteCount_, 1);
 			if (byteCount_ > MAX_BYTE_LEN) return false;
-			is.read((char*)&outputsValue_, byteCount_);
+			is.read((char*)&outputsValue_, (uint32_t)byteCount_);
 		}
 		catch (std::istream::failure e) {
 			return false;
@@ -233,11 +233,21 @@ namespace ModbusProt
 	bool
 	WriteMultipleCoilsResPDU::encode(std::ostream& os) const
 	{
-		uint16_t startingAddress = ByteOrder::toBig(startingAddress_);
-		os.write((char*)&startingAddress, 2);
+		// Write PDU header to output stream
+		if (ModbusPDU::encode(os) == false) {
+			return false;
+		}
 
-		uint16_t quantityOfOutputs = ByteOrder::toBig(quantityOfOutputs);
-		os.write((char*)&quantityOfOutputs, 2);
+		try {
+			uint16_t startingAddress = ByteOrder::toBig(startingAddress_);
+			os.write((char*)&startingAddress, 2);
+
+			uint16_t quantityOfOutputs = ByteOrder::toBig(quantityOfOutputs_);
+			os.write((char*)&quantityOfOutputs, 2);
+		}
+		catch (std::ostream::failure e) {
+			return false;
+		}
 
 		return true;
 	}
@@ -245,11 +255,16 @@ namespace ModbusProt
 	bool
 	WriteMultipleCoilsResPDU::decode(std::istream& is)
 	{
-		is.read((char*)&startingAddress_, 2);
-		startingAddress_ = ByteOrder::fromBig(startingAddress_);
+		try {
+			is.read((char*)&startingAddress_, 2);
+			startingAddress_ = ByteOrder::fromBig(startingAddress_);
 
-		is.read((char*)&quantityOfOutputs_, 2);
-		quantityOfOutputs_ = ByteOrder::fromBig(quantityOfOutputs_);
+			is.read((char*)&quantityOfOutputs_, 2);
+			quantityOfOutputs_ = ByteOrder::fromBig(quantityOfOutputs_);
+		}
+		catch (std::istream::failure e) {
+			return false;
+		}
 
 		return true;
 	}

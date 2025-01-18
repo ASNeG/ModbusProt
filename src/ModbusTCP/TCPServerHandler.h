@@ -21,6 +21,8 @@
 #include <memory>
 #include <asio.hpp>
 
+#include "Base/LogHandler.h"
+#include "Base/LogDefault.h"
 #include "ModbusTCP/ModbusTCP.h"
 #include "ModbusTCP/TCPBase.h"
 #include "ModbusProt/ErrorPDU.h"

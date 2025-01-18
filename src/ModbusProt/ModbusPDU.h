@@ -70,6 +70,7 @@ namespace ModbusProt
 		//
 		EncapsulatedInterfaceTransport			// 43
 	};
+	std::string pduFunctionToString(PDUFunction pduFunction);
 
 
 	enum class PDUType {
@@ -92,6 +93,7 @@ namespace ModbusProt
 		PDUFunction pduFunction(void);
 		PDUType pduType(void);
 		void pduType(PDUType pduType);
+		std::string pduToString(void);
 
 		virtual bool encode(std::ostream& os) const;
 		virtual bool decode(std::istream& is);
@@ -148,21 +150,6 @@ namespace ModbusProt
 	  public:
 		uint16_t registerAddress_ =  0x00;
 		uint16_t registerValue_ = 0x00;
-	};
-
-	class WriteMultiCoilsReq {
-	  public:
-		uint16_t startingAddress_ = 0x00;
-		uint16_t quantityOfOutputs_ = 0x00;
-		uint8_t byteCount_ = 0x00;
-		byte_t outputsValue_[MAX_BYTE_LEN];
-	};
-
-	class WriteMultiCoilsRes {
-	  public:
-		uint8_t functionCode_ = 0x0F;
-		uint16_t startingAddress_ =  0x00;
-		uint16_t quantityOfOutputs_ = 0x00;
 	};
 
 	class WriteMultiHoldingRegistersReq {

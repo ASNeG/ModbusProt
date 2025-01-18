@@ -61,8 +61,16 @@ namespace ModbusTCP
 		}
 
 		// Create acceptor socket
+		logHandler_->logList(Base::LogLevel::Debug, {
+			"open server with ip", listenEndpoint.address().to_string(),
+			"and port", std::to_string(listenEndpoint.port())
+		});
 		acceptor_ = std::make_shared<asio::ip::tcp::acceptor>(ctx(), listenEndpoint);
 		if (acceptor_ == nullptr) {
+			logHandler_->logList(Base::LogLevel::Debug, {
+				"close server with ip", listenEndpoint.address().to_string(),
+				"and port", std::to_string(listenEndpoint.port())
+			});
 			return false;
 		}
 
@@ -83,6 +91,7 @@ namespace ModbusTCP
 		}
 
 		// Close and remove acceptor endpoint
+		logHandler_->logList(Base::LogLevel::Debug, {"close server"});
 		acceptor_->close();
 		acceptor_ = nullptr;
 	}

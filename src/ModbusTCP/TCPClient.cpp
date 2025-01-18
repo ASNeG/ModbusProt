@@ -210,14 +210,14 @@ namespace ModbusTCP
 		bool error = false;
 		if (result.index() == 1) {
 			// timed out
-			logHandler_->logList(Base::LogLevel::Error, {"send timeout"});
+			logHandler_->logList(Base::LogLevel::Error, {"send to server timeout"});
 			error = true;
 		}
 		else {
 			auto [e, n] = std::get<0>(result);
 			if (e) {
 				// Send error
-				logHandler_->logList(Base::LogLevel::Error, {"send error:", e.message()});
+				logHandler_->logList(Base::LogLevel::Error, {"send to server error:", e.message()});
 				error = true;
 			}
 		}
@@ -245,7 +245,7 @@ namespace ModbusTCP
 		bool error = false;
 		if (result.index() == 1) {
 			// timed out
-			logHandler_->logList(Base::LogLevel::Error, {"receive timeout"});
+			logHandler_->logList(Base::LogLevel::Error, {"receive from server timeout"});
 			error = true;
 		}
 		else {
@@ -253,7 +253,7 @@ namespace ModbusTCP
 			*recvBufferLen = n;
 			if (e) {
 				// Send error
-				logHandler_->logList(Base::LogLevel::Error, {"receive error:", e.message()});
+				logHandler_->logList(Base::LogLevel::Error, {"receive from server error:", e.message()});
 				error = true;
 			}
 		}
@@ -317,11 +317,12 @@ namespace ModbusTCP
 		modbusTCPReq.modbusPDU(req);
 		modbusTCPReq.transactionIdentifier(transactionIdentifier);
 		modbusTCPReq.unitIdentifier(unitIdentifier);
+		transactionIdentifier++;
 
 		ss.rdbuf()->pubsetbuf(sendBuffer.data(), sendBuffer.size());
 		bool rc = modbusTCPReq.encode(ss);
 		if (!rc) {
-			logHandler_->logList(Base::LogLevel::Error, {"encode error"});
+			logHandler_->logList(Base::LogLevel::Error, {"client encode error"});
 			return false;
 		}
 		*sendBufferLen = ss.tellp();
@@ -340,10 +341,10 @@ namespace ModbusTCP
 		std::stringstream ss;
 
 		modbusTCPRes.pduType(ModbusProt::PDUType::Response);
-		ss.rdbuf()->pubsetbuf(recvBuffer.data(), recvBuffer.size());
+		ss.rdbuf()->pubsetbuf(recvBuffer.data(), recvBufferLen);
 		bool rc = modbusTCPRes.decode(ss);
 		if (!rc) {
-			logHandler_->logList(Base::LogLevel::Error, {"decode error"});
+			logHandler_->logList(Base::LogLevel::Error, {"client decode error"});
 			return false;
 		}
 

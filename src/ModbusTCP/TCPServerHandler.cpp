@@ -15,6 +15,8 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
+#include <string>
+
 #include <asio/experimental/as_tuple.hpp>
 #include <asio/experimental/awaitable_operators.hpp>
 
@@ -98,6 +100,7 @@ namespace ModbusTCP
 		bool error = false;
 		if (result.index() == 1) {
 			// timed out
+			logHandler_->logList(Base::LogLevel::Error, {"receive from client timeout"});
 			error = true;
 		}
 		else {
@@ -105,6 +108,7 @@ namespace ModbusTCP
 			*recvBufferLen = n;
 			if (e) {
 				// Send error
+				logHandler_->logList(Base::LogLevel::Error, {"receive from client error:", e.message()});
 				error = true;
 			}
 		}
@@ -122,6 +126,12 @@ namespace ModbusTCP
 		uint32_t sendBufferLen
 	)
 	{
+		std::cout << "SEND **************************** " << sendBufferLen << std::endl;
+		for (uint32_t idx = 0; idx < sendBufferLen; idx++) {
+			std::cout << " " << std::hex << (uint32_t)sendBuffer[idx];
+		}
+		std::cout << std::endl;
+
 		// Send modbus pdu to server
 		auto result = co_await(
 			async_write(*socket_, asio::buffer(sendBuffer, sendBufferLen), use_nothrow_awaitable) ||
@@ -131,12 +141,14 @@ namespace ModbusTCP
 		bool error = false;
 		if (result.index() == 1) {
 			// timed out
+			logHandler_->logList(Base::LogLevel::Error, {"send to client timeout"});
 			error = true;
 		}
 		else {
 			auto [e, n] = std::get<0>(result);
 			if (e) {
 				// Send error
+				logHandler_->logList(Base::LogLevel::Error, {"send to client error:", e.message()});
 				error = true;
 			}
 		}
@@ -159,9 +171,14 @@ namespace ModbusTCP
 		std::stringstream ss;
 
 		modbusTCPReq.pduType(ModbusProt::PDUType::Request);
-		ss.rdbuf()->pubsetbuf(recvBuffer.data(), recvBuffer.size());
+		ss.rdbuf()->pubsetbuf(recvBuffer.data(), recvBufferLen);
 		bool rc = modbusTCPReq.decode(ss);
 		if (!rc) {
+			std::string pduType = "PDUType null";
+			if (modbusTCPReq.modbusPDU() != nullptr) modbusTCPReq.modbusPDU()->pduToString();
+			logHandler_->logList(Base::LogLevel::Error, {
+				"server decode error:", pduType
+			});
 			return false;
 		}
 
@@ -182,6 +199,7 @@ namespace ModbusTCP
 		ss.rdbuf()->pubsetbuf(sendBuffer.data(), sendBuffer.size());
 		bool rc = modbusTCPRes.encode(ss);
 		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {"server encode error"});
 			return false;
 		}
 		*sendBufferLen = ss.tellp();
@@ -194,6 +212,10 @@ namespace ModbusTCP
 		ModbusProt::ErrorPDU::ExceptionCode ec
 	)
 	{
+		logHandler_->logList(Base::LogLevel::Error, {
+			"create error pdu for function",
+			pduFunctionToString(pduFunction)
+		});
 		auto errorPDU = std::make_shared<ModbusProt::ErrorPDU>(pduFunction);
 		errorPDU->exceptionCode(ec);
 		return errorPDU;

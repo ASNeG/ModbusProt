@@ -64,6 +64,7 @@ namespace ModbusTCP
 	{
 		// check  if modbus model exist
 		if (modbusModel_ == nullptr) {
+			logHandler_->logList(Base::LogLevel::Error, {"modbus model not exist"});
 			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_FUNC_UNKNWON);
 			return true;
 		}
@@ -80,6 +81,10 @@ namespace ModbusTCP
 		}
 
 		// Create error response
+		logHandler_->logList(Base::LogLevel::Error, {
+			"modbus request error, because pdu function unknown:",
+			pduFunctionToString(req->pduFunction())
+		});
 		res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_FUNC_UNKNWON);
 		return true;
 	}
@@ -93,10 +98,12 @@ namespace ModbusTCP
 	{
 		bool rc = true;
 		auto readCoilReq = std::static_pointer_cast<ModbusProt::ReadCoilsReqPDU>(req);
+		logHandler_->logList(Base::LogLevel::Debug, {"handle read coils request"});
 
 		// Check if function exist
 		rc = modbusModel_->checkType(ModbusProt::MemoryType::Coils);
 		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {"memory model not exist"});
 			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_FUNC_UNKNWON);
 			return true;
 		}
@@ -108,6 +115,11 @@ namespace ModbusTCP
 			readCoilReq->quantityOfInputs()
 		);
 		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {
+				"starting address", std::to_string(readCoilReq->startingAddress()),
+				"with range", std::to_string(readCoilReq->quantityOfInputs()),
+				"not exist"
+			});
 			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_ADDRESS_UNKNWON);
 			return true;
 		}
@@ -125,6 +137,9 @@ namespace ModbusTCP
 			readCoilReq->quantityOfInputs()
 		);
 		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {
+				"processing read coils request error"
+			});
 			res = TCPServerHandler::createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_PROCESSING_ERROR);
 			return true;
 		}
@@ -143,11 +158,12 @@ namespace ModbusTCP
 	{
 		bool rc = true;
 		auto writeSingleCoilReq = std::static_pointer_cast<ModbusProt::WriteSingleCoilReqPDU>(req);
+		logHandler_->logList(Base::LogLevel::Debug, {"handle write single coil request"});
 
 		// Check if function exist
 		rc = modbusModel_->checkType(ModbusProt::MemoryType::Coils);
 		if (!rc) {
-
+			logHandler_->logList(Base::LogLevel::Error, {"memory model not exist"});
 			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_FUNC_UNKNWON);
 			return true;
 		}
@@ -159,6 +175,10 @@ namespace ModbusTCP
 			1
 		);
 		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {
+				"address", std::to_string(writeSingleCoilReq->address()),
+				"not exist"
+			});
 			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_ADDRESS_UNKNWON);
 			return true;
 		}
@@ -176,6 +196,9 @@ namespace ModbusTCP
 			1
 		);
 		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {
+				"processing write single coil request error"
+			});
 			res = TCPServerHandler::createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_PROCESSING_ERROR);
 			return true;
 		}
@@ -195,11 +218,12 @@ namespace ModbusTCP
 	{
 		bool rc = true;
 		auto writeMultipleCoilsReq = std::static_pointer_cast<ModbusProt::WriteMultipleCoilsReqPDU>(req);
+		logHandler_->logList(Base::LogLevel::Debug, {"handle write multiple coils request"});
 
 		// Check if function exist
 		rc = modbusModel_->checkType(ModbusProt::MemoryType::Coils);
 		if (!rc) {
-
+			logHandler_->logList(Base::LogLevel::Error, {"memory model not exist"});
 			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_FUNC_UNKNWON);
 			return true;
 		}
@@ -211,6 +235,11 @@ namespace ModbusTCP
 			1
 		);
 		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {
+				"starting address", std::to_string(writeMultipleCoilsReq->startingAddress()),
+				"with range", std::to_string(writeMultipleCoilsReq->quantityOfOutputs()),
+				"not exist"
+			});
 			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_ADDRESS_UNKNWON);
 			return true;
 		}
@@ -226,6 +255,9 @@ namespace ModbusTCP
 			writeMultipleCoilsReq->quantityOfOutputs()
 		);
 		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {
+				"processing write multiple coils request error"
+			});
 			res = TCPServerHandler::createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_PROCESSING_ERROR);
 			return true;
 		}

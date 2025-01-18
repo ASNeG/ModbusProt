@@ -29,6 +29,35 @@ namespace ModbusProt
 		{ PDUFunction::WriteMultipleCoils, 0x0F }
 	};
 
+	std::string
+	pduFunctionToString(PDUFunction pduFunction)
+	{
+		switch (pduFunction)
+		{
+			case PDUFunction::ReadDiscreteInputs: return "ReadDiscreteInputs";
+			case PDUFunction::ReadCoils: return "ReadCoils";
+			case PDUFunction::WriteSingleCoil: return "WriteSingleCoil";
+			case PDUFunction::WriteMultipleCoils: return "WriteMultipleCoils";
+			case PDUFunction::ReadInputRegisters: return "ReadInputRegisters";
+			case PDUFunction::ReadMultipleHoldingRegisters: return "ReadMultipleHoldingRegisters";
+			case PDUFunction::WriteSingleHoldingRegister: return "WriteSingleHoldingRegister";
+			case PDUFunction::WriteMultipleHoldingRegisters: return "WriteMultipleHoldingRegisters";
+			case PDUFunction::ReadWriteMultipleRegisters: return "ReadWriteMultipleRegisters";
+			case PDUFunction::MaskWriteRegister: return "MaskWriteRegister";
+			case PDUFunction::ReadFifoQueue: return "ReadFifoQueue";
+			case PDUFunction::ReadFileRecord: return "ReadFileRecord";
+			case PDUFunction::WriteFileRecord: return "WriteFileRecord";
+			case PDUFunction::ReadAxceptionStatus: return "ReadAxceptionStatus";
+			case PDUFunction::Diagnostic: return "Diagnostic";
+			case PDUFunction::GetComEventCounter: return "GetComEventCounter";
+			case PDUFunction::GetComEventLog: return "ReadAxceptionStatus";
+			case PDUFunction::ReportSlaveID: return "ReportSlaveID";
+			case PDUFunction::ReadDeviceIdentification: return "ReadDeviceIdentification";
+			case PDUFunction::EncapsulatedInterfaceTransport: return "EncapsulatedInterfaceTransport";
+		}
+		return "Unknown";
+	}
+
 
 	// ------------------------------------------------------------------------
 	// ------------------------------------------------------------------------
@@ -81,6 +110,7 @@ namespace ModbusProt
 		catch (std::istream::failure e) {
 			return false;
 		}
+		std::cout << "XXXX" << (uint32_t)funcCode  << std::endl;
 		if ((funcCode & 0x80) == 0x80) {
 			funcCode -= 0x80;
 			pduType_ = PDUType::Error;
@@ -89,6 +119,7 @@ namespace ModbusProt
 		// Find function code
 		for (auto it: ModbusProt::funcCodeMap_) {
 			if (it.second == funcCode) {
+				pduFunction_ = it.first;
 				return true;
 			}
 		}
@@ -111,6 +142,19 @@ namespace ModbusProt
 	ModbusPDU::pduType(PDUType pduType)
 	{
 		pduType_ = pduType;
+	}
+
+	std::string
+	ModbusPDU::pduToString(void)
+	{
+		switch (pduType_)
+		{
+			case PDUType::None: return "None";
+			case PDUType::Request: return "Request";
+			case PDUType::Response: return "Response";
+			case PDUType::Error: return "Error";
+			default: return "Unknown";
+		}
 	}
 
 }
