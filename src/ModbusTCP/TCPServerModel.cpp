@@ -82,6 +82,8 @@ namespace ModbusTCP
 				return handleWriteMultipleCoilsReq(unitIdentifier, req, res);
 			case ModbusProt::PDUFunction::ReadDiscreteInputs:
 				return handleReadDiscreteInputsReq(unitIdentifier, req, res);
+			case ModbusProt::PDUFunction::ReadInputRegisters:
+				return handleReadInputRegistersReq(unitIdentifier, req, res);
 		}
 
 		// Create error response
@@ -333,7 +335,7 @@ namespace ModbusTCP
 	}
 
 	bool
-	TCPServerModel::handleReadInputsRegisterReq(
+	TCPServerModel::handleReadInputRegistersReq(
 		uint8_t unitIdentifier,
 		ModbusProt::ModbusPDU::SPtr& req,
 		ModbusProt::ModbusPDU::SPtr& res
