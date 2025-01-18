@@ -164,7 +164,7 @@ namespace ModbusProt
 		// Check max index
 		if (count == 0) return false;
 		if (count*2 > MAX_BYTE_LEN) return false;
-		if (count*2 >= byteCount_) return false;
+		if (count*2 > byteCount_) return false;
 
 		uint8_t byteCount = count*2;
 		memcpy(value, inputRegisters_, byteCount);
