@@ -76,6 +76,11 @@ namespace ModbusTCP
 			ModbusProt::ModbusPDU::SPtr& req,
 			ModbusProt::ModbusPDU::SPtr& res
 		);
+		bool handleReadInputsRegisterReq(
+			uint8_t unitIdentifier,
+			ModbusProt::ModbusPDU::SPtr& req,
+			ModbusProt::ModbusPDU::SPtr& res
+		);
 	};
 
 

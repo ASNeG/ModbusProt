@@ -23,6 +23,7 @@
 #include "ModbusProt/ErrorPDU.h"
 #include "ModbusTCP/TCPServerModel.h"
 #include "ModbusProt/ReadDiscreteInputsPDU.h"
+#include "ModbusProt/ReadInputRegistersPDU.h"
 
 namespace ModbusTCP
 {
@@ -328,6 +329,66 @@ namespace ModbusTCP
 		readDiscreteInputsRes->setInputStatus(readDiscreteInputsReq->quantityOfInputs(), value);
 
 		res = readDiscreteInputsRes;
+		return true;
+	}
+
+	bool
+	TCPServerModel::handleReadInputsRegisterReq(
+		uint8_t unitIdentifier,
+		ModbusProt::ModbusPDU::SPtr& req,
+		ModbusProt::ModbusPDU::SPtr& res
+	)
+	{
+		bool rc = true;
+		auto readInputRegistersReq = std::static_pointer_cast<ModbusProt::ReadInputRegistersReqPDU>(req);
+		logHandler_->logList(Base::LogLevel::Debug, {"handle read input registers request"});
+
+		// Check if function exist
+		rc = modbusModel_->checkType(ModbusProt::MemoryType::InputRegisters);
+		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {"memory model not exist"});
+			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_FUNC_UNKNWON);
+			return true;
+		}
+
+		// Check if address is valid
+		rc = modbusModel_->checkAddress(
+			ModbusProt::MemoryType::InputRegisters,
+			readInputRegistersReq->startingAddress(),
+			readInputRegistersReq->quantityOfInputs()
+		);
+		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {
+				"starting address", std::to_string(readInputRegistersReq->startingAddress()),
+				"with range", std::to_string(readInputRegistersReq->quantityOfInputs()),
+				"not exist"
+			});
+			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_ADDRESS_UNKNWON);
+			return true;
+		}
+
+		// Create modbus response
+		auto readInputRegistersRes = std::make_shared<ModbusProt::ReadInputRegistersResPDU>();
+
+		// Get coil data from memory area
+		uint8_t value[MAX_BYTE_LEN];
+		memset((char*)&value, 0x00, MAX_BYTE_LEN);
+		rc = modbusModel_->getValue(
+			ModbusProt::MemoryType::InputRegisters,
+			readInputRegistersReq->startingAddress(),
+			value,
+			readInputRegistersReq->quantityOfInputs()
+		);
+		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {
+				"processing read input registers request error"
+			});
+			res = TCPServerHandler::createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_PROCESSING_ERROR);
+			return true;
+		}
+		readInputRegistersRes->setInputRegisters(readInputRegistersReq->quantityOfInputs(), (uint16_t*)value);
+
+		res = readInputRegistersRes;
 		return true;
 	}
 
