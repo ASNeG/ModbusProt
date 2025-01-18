@@ -21,6 +21,7 @@
 #include "ReadCoilsPDU.h"
 #include "WriteSingleCoilPDU.h"
 #include "WriteMultipleCoilsPDU.h"
+#include "ReadDiscreteInputsPDU.h"
 
 namespace ModbusProt
 {
@@ -44,6 +45,10 @@ namespace ModbusProt
 			case static_cast<int>(PDUFunction::WriteMultipleCoils):
 				if (pduType == PDUType::Request) return std::make_shared<WriteMultipleCoilsReqPDU>();
 				else return std::make_shared<WriteMultipleCoilsResPDU>();
+				break;
+			case static_cast<int>(PDUFunction::ReadDiscreteInputs):
+				if (pduType == PDUType::Request) return std::make_shared<ReadDiscreteInputsReqPDU>();
+				else return std::make_shared<ReadDiscreteInputsResPDU>();
 				break;
 			default:
 				return nullptr;
