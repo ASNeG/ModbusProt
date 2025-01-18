@@ -22,7 +22,6 @@
 #include <memory>
 #include <asio/experimental/channel.hpp>
 
-#include "Base/Queue.h"
 #include "ModbusProt/ModbusPDU.h"
 #include "ModbusProt/ModbusCallback.h"
 #include "ModbusTCP/TCPBase.h"
@@ -92,6 +91,7 @@ namespace ModbusTCP
 		ClientChannel channel_;
 
 		void setState(TCPClientState tcpClientState);
+		std::string tcpClientStateToString(TCPClientState tcpClientState);
 
 		asio::awaitable<bool> timeout(
 			std::chrono::steady_clock::duration duration

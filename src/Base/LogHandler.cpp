@@ -15,6 +15,8 @@
    Autor: Kai Huebl (kai@huebl-sgh.de)
  */
 
+#include <sstream>
+
 #include "Base/LogHandler.h"
 
 namespace Base
@@ -26,6 +28,19 @@ namespace Base
 
 	LogHandler::~LogHandler(void)
 	{
+	}
+
+	void
+	LogHandler::logList(LogLevel logLevel, std::initializer_list<std::string> paraList)
+	{
+		bool firstParameter = true;
+		std::stringstream ss;
+		for (auto para : paraList) {
+			if (firstParameter == false) ss << " ";
+			firstParameter = false;
+			ss << para;
+		}
+		log(logLevel, ss.str());
 	}
 
 }

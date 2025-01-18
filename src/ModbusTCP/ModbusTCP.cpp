@@ -162,8 +162,10 @@ namespace ModbusTCP
 		}
 
 		// Decode function code of modbus PDU
+		std::cout << "xxxxxxxxxxxxxxxxxx" << std::endl;
 		ModbusPDU modbusPDU(PDUFunction::None, pduType_);
 		if (!modbusPDU.decode(is)) return false;
+		std::cout << "xxxxxxxxxxxxxxxxxx" << std::endl;
 
 		// Create modbus PDU class
 		modbusPDU_ = ModbusPDUFactory::createModbusPDU(modbusPDU.pduFunction(), modbusPDU.pduType());

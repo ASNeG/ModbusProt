@@ -65,7 +65,13 @@ namespace ModbusTCP
 			ModbusProt::ModbusPDU::SPtr& req,
 			ModbusProt::ModbusPDU::SPtr& res
 		);
+		bool handleWriteMultipleCoilsReq(
+			uint8_t unitIdentifier,
+			ModbusProt::ModbusPDU::SPtr& req,
+			ModbusProt::ModbusPDU::SPtr& res
+		);
 	};
+
 
 }
 

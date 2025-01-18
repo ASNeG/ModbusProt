@@ -19,6 +19,7 @@
 #define __Base_LogHandler_h__
 
 #include <memory>
+#include <initializer_list>
 
 namespace Base
 {
@@ -38,7 +39,8 @@ namespace Base
 		LogHandler(void);
 		virtual ~LogHandler(void);
 
-		virtual void log(LogLevel, const std::string& message) = 0;
+		void logList(LogLevel logLevel, std::initializer_list<std::string> paraList);
+		virtual void log(LogLevel logLevel, const std::string& message) = 0;
 	};
 }
 

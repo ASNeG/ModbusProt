@@ -18,8 +18,11 @@
 #ifndef __ModbusTCP_TCPBase_h__
 #define __ModbusTCP_TCPBase_h__
 
+#include <memory>
 #include <asio.hpp>
 
+#include "Base/LogHandler.h"
+#include "Base/LogDefault.h"
 #include "ModbusTCP/ModbusTCP.h"
 
 namespace ModbusTCP
@@ -38,6 +41,9 @@ namespace ModbusTCP
 			void
 		);
 
+		void logHandler(Base::LogHandler::SPtr& logHandler);
+		Base::LogHandler::SPtr logHandler(void);
+
 		asio::io_context& ctx(void);
 
 		bool getEndpoint(
@@ -45,6 +51,9 @@ namespace ModbusTCP
 			const std::string& port,
 			asio::ip::tcp::endpoint& endpoint
 		);
+
+	  protected:
+		Base::LogHandler::SPtr logHandler_ = std::make_shared<Base::LogDefault>();
 
 	  private:
 		asio::io_context ctx_;			// Internal context

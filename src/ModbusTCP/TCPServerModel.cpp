@@ -19,6 +19,7 @@
 
 #include "ModbusProt/ReadCoilsPDU.h"
 #include "ModbusProt/WriteSingleCoilPDU.h"
+#include "ModbusProt/WriteMultipleCoilsPDU.h"
 #include "ModbusProt/ErrorPDU.h"
 #include "ModbusTCP/TCPServerModel.h"
 
@@ -74,6 +75,8 @@ namespace ModbusTCP
 				return handleReadCoilsReq(unitIdentifier, req, res);
 			case ModbusProt::PDUFunction::WriteSingleCoil:
 				return handleWriteSingleCoilReq(unitIdentifier, req, res);
+			case ModbusProt::PDUFunction::WriteMultipleCoils:
+				return handleWriteMultipleCoilsReq(unitIdentifier, req, res);
 		}
 
 		// Create error response
@@ -179,6 +182,56 @@ namespace ModbusTCP
 		writeSingleCoilRes->value(writeSingleCoilReq->value());
 		writeSingleCoilRes->address(writeSingleCoilReq->address());
 		res = writeSingleCoilRes;
+
+		return true;
+	}
+
+	bool
+	TCPServerModel::handleWriteMultipleCoilsReq(
+		uint8_t unitIdentifier,
+		ModbusProt::ModbusPDU::SPtr& req,
+		ModbusProt::ModbusPDU::SPtr& res
+	)
+	{
+		bool rc = true;
+		auto writeMultipleCoilsReq = std::static_pointer_cast<ModbusProt::WriteMultipleCoilsReqPDU>(req);
+
+		// Check if function exist
+		rc = modbusModel_->checkType(ModbusProt::MemoryType::Coils);
+		if (!rc) {
+
+			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_FUNC_UNKNWON);
+			return true;
+		}
+
+		// Check if address is valid
+		rc = modbusModel_->checkAddress(
+			ModbusProt::MemoryType::Coils,
+			writeMultipleCoilsReq->startingAddress(),
+			1
+		);
+		if (!rc) {
+			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_ADDRESS_UNKNWON);
+			return true;
+		}
+
+		// Create write multiple coils response
+		auto writeMultipleCoilsRes = std::make_shared<ModbusProt::WriteMultipleCoilsResPDU>();
+
+		// Set coil data to memory area
+		rc = modbusModel_->setValue(
+			ModbusProt::MemoryType::Coils,
+			writeMultipleCoilsReq->startingAddress(),
+			writeMultipleCoilsReq->outputsValue(),
+			writeMultipleCoilsReq->quantityOfOutputs()
+		);
+		if (!rc) {
+			res = TCPServerHandler::createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_PROCESSING_ERROR);
+			return true;
+		}
+		writeMultipleCoilsRes->quantityOfOutputs(writeMultipleCoilsReq->quantityOfOutputs());
+		writeMultipleCoilsRes->startingAddress(writeMultipleCoilsReq->startingAddress());
+		res = writeMultipleCoilsRes;
 
 		return true;
 	}

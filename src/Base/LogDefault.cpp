@@ -1,5 +1,5 @@
 /*
-   Copyright 2025a Kai Huebl (kai@huebl-sgh.de)
+   Copyright 2025 Kai Huebl (kai@huebl-sgh.de)
 
    Lizenziert gemäß Apache Licence Version 2.0 (die „Lizenz“); Nutzung dieser
    Datei nur in Übereinstimmung mit der Lizenz erlaubt.
@@ -16,6 +16,7 @@
  */
 
 #include <iostream>
+#include <chrono>
 
 #include "Base/LogDefault.h"
 
@@ -59,7 +60,11 @@ namespace Base
 			}
 		}
 
-		std::cout << logLevelString << " " << message << std::endl;
+		std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+		std::time_t t = std::chrono::system_clock::to_time_t(now);
+		std::string ts = std::ctime(&t);
+		ts.resize(ts.size()-1);
+		std::cout << logLevelString << " " << ts << " " << message << std::endl;
 	}
 
 }

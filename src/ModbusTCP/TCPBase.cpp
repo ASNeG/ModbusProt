@@ -37,6 +37,18 @@ namespace ModbusTCP
 	{
 	}
 
+	void
+	TCPBase::logHandler(Base::LogHandler::SPtr& logHandler)
+	{
+		logHandler_ = logHandler;
+	}
+
+	Base::LogHandler::SPtr
+	TCPBase::logHandler(void)
+	{
+		return logHandler_;
+	}
+
 	TCPBase::~TCPBase(void)
 	{
 		// Stop own event loop thread

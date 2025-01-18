@@ -41,6 +41,7 @@ namespace ModbusProt
 		bool setOutputsValue(uint16_t idx, bool value);
 		bool getOutputsValue(uint16_t count, uint8_t* value);
 		bool getOutputsValue(uint16_t idx, bool& value);
+		uint8_t* outputsValue(void);
 
 		virtual bool encode(std::ostream& os) const override;
 		virtual bool decode(std::istream& is) override;

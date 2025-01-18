@@ -79,9 +79,28 @@ namespace ModbusTCP
 	void
 	TCPClient::setState(TCPClientState tcpClientState)
 	{
+
+
+
 		std::lock_guard<std::mutex> guard(mutex_);
 		tcpClientState_= tcpClientState;
 		stateCallback_(tcpClientState_);
+	}
+
+	std::string
+	TCPClient::tcpClientStateToString(TCPClientState tcpClientState)
+	{
+		switch (tcpClientState)
+		{
+			case TCPClientState::Init: return "Init";
+			case TCPClientState::Connecting: return "Connecting";
+			case TCPClientState::Connected: return "Connected";
+			case TCPClientState::WaitForReconnect: return "WaitForReconnect";
+			case TCPClientState::Close: return "Close";
+			case TCPClientState::Error: return "Error";
+			case TCPClientState::Down: return "Down";
+			default: return "Unknown";
+		}
 	}
 
 	asio::awaitable<bool>
@@ -103,6 +122,10 @@ namespace ModbusTCP
 	{
 		std::cout << "TCPClient::connectToServer" << std::endl;
 
+		logHandler_->logList(Base::LogLevel::Debug, {
+			"connecting to ip", targetEndpoint.address().to_string(),
+			"and port", std::to_string(targetEndpoint.port())
+		});
 		while (true) {
 			// Set connecting state
 			setState(TCPClientState::Connecting);
@@ -116,12 +139,21 @@ namespace ModbusTCP
 			bool error = false;
 			if (result.index() == 1) {
 				// timed out
+				logHandler_->logList(Base::LogLevel::Error, {
+					"connect timeout to ip", targetEndpoint.address().to_string(),
+					"and port", std::to_string(targetEndpoint.port())
+				});
 				error = true;
 			}
 			else {
 				auto [e] = std::get<0>(result);
 				if (e) {
 					// Connect error
+					logHandler_->logList(Base::LogLevel::Error, {
+						"connect error to ip", targetEndpoint.address().to_string(),
+						"and port", std::to_string(targetEndpoint.port()),
+						":", e.message()
+					});
 					error = true;
 				}
 			}
@@ -129,6 +161,10 @@ namespace ModbusTCP
 			if (error) {
 				if (reconnectTimeout_ == 0) {
 					// Set close state
+					logHandler_->logList(Base::LogLevel::Error, {
+						"disconnect to ip", targetEndpoint.address().to_string(),
+						"and port", std::to_string(targetEndpoint.port())
+					});
 					setState(TCPClientState::Close);
 					co_return false;
 				}
@@ -138,6 +174,10 @@ namespace ModbusTCP
 				auto rc = co_await timeout(std::chrono::milliseconds(reconnectTimeout_));
 				if (!rc) {
 					// Set close state
+					logHandler_->logList(Base::LogLevel::Error, {
+						"reconnect error to ip", targetEndpoint.address().to_string(),
+						"and port", std::to_string(targetEndpoint.port())
+					});
 					setState(TCPClientState::Close);
 					co_return false;
 				}
@@ -147,6 +187,10 @@ namespace ModbusTCP
 		}
 
 		// Set connected state
+		logHandler_->logList(Base::LogLevel::Debug, {
+			"connected to ip", targetEndpoint.address().to_string(),
+			"and port", std::to_string(targetEndpoint.port())
+		});
 		setState(TCPClientState::Connected);
 		co_return true;
 	}
@@ -166,12 +210,14 @@ namespace ModbusTCP
 		bool error = false;
 		if (result.index() == 1) {
 			// timed out
+			logHandler_->logList(Base::LogLevel::Error, {"send timeout"});
 			error = true;
 		}
 		else {
 			auto [e, n] = std::get<0>(result);
 			if (e) {
 				// Send error
+				logHandler_->logList(Base::LogLevel::Error, {"send error:", e.message()});
 				error = true;
 			}
 		}
@@ -199,15 +245,15 @@ namespace ModbusTCP
 		bool error = false;
 		if (result.index() == 1) {
 			// timed out
-			std::cout << "timeout" << std::endl;
+			logHandler_->logList(Base::LogLevel::Error, {"receive timeout"});
 			error = true;
 		}
 		else {
 			auto [e, n] = std::get<0>(result);
 			*recvBufferLen = n;
 			if (e) {
-				std::cout << "socket error" << std::endl;
 				// Send error
+				logHandler_->logList(Base::LogLevel::Error, {"receive error:", e.message()});
 				error = true;
 			}
 		}
@@ -242,6 +288,7 @@ namespace ModbusTCP
 			auto [e, queueElement] = std::get<0>(result);
 			if (e) {
 				// Send error
+				logHandler_->logList(Base::LogLevel::Error, {"receive channel error:", e.message()});
 				co_return false;
 			}
 			qe = queueElement;
@@ -274,6 +321,7 @@ namespace ModbusTCP
 		ss.rdbuf()->pubsetbuf(sendBuffer.data(), sendBuffer.size());
 		bool rc = modbusTCPReq.encode(ss);
 		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {"encode error"});
 			return false;
 		}
 		*sendBufferLen = ss.tellp();
@@ -295,6 +343,7 @@ namespace ModbusTCP
 		ss.rdbuf()->pubsetbuf(recvBuffer.data(), recvBuffer.size());
 		bool rc = modbusTCPRes.decode(ss);
 		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {"decode error"});
 			return false;
 		}
 
@@ -346,7 +395,6 @@ namespace ModbusTCP
 				// Send modbus pdu to server
 				rc = co_await sendToServer(sendBuffer, sendBufferLen);
 				if (!rc) {
-
 					qe->responseCallback_(ModbusProt::ModbusError::ConnectionError, qe->req_, qe->res_);
 					if (reconnectTimeout_ == 0) co_return;
 					continue;
@@ -385,6 +433,7 @@ namespace ModbusTCP
 		// Cleanup and set down state
 		timer_ = nullptr;
 		socket_ = nullptr;
+		logHandler_->logList(Base::LogLevel::Debug, {"close connection"});
 		setState(TCPClientState::Down);
 		co_return;
 	}
@@ -424,6 +473,7 @@ namespace ModbusTCP
 	TCPClient::disconnect(void)
 	{
 		std::cout << "TCPClient::disconnect" << std::endl;
+		logHandler_->logList(Base::LogLevel::Debug, {"disconnect"});
 		co_spawn(ctx(), close(), asio::detached);
 	}
 

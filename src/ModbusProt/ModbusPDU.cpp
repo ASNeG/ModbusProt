@@ -26,7 +26,7 @@ namespace ModbusProt
 	ModbusPDU::FuncCodeMap funcCodeMap_ = {
 		{ PDUFunction::ReadCoils, 0x01 },
 		{ PDUFunction::WriteSingleCoil, 0x05 },
-		{ PDUFunction::WriteMultipleCoils, 0x10 }
+		{ PDUFunction::WriteMultipleCoils, 0x0F }
 	};
 
 
@@ -89,7 +89,6 @@ namespace ModbusProt
 		// Find function code
 		for (auto it: ModbusProt::funcCodeMap_) {
 			if (it.second == funcCode) {
-				pduFunction_ = it.first;
 				return true;
 			}
 		}
