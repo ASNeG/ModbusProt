@@ -103,18 +103,6 @@ namespace ModbusProt
 		PDUType pduType_ = PDUType::None;
 	};
 #if 0
-	class ReadDiscreteInputsReq {
-	  public:
-		uint8_t functionCode_ = 0x02;
-		uint16_t startingAddress_ = 0x00;
-		uint16_t quantityOfInputs_ = 0x00;
-	};
-
-	class ReadDiscreteInputRes {
-	  public:
-		uint8_t byteCount_ = 0x00;
-		byte_t inputStatus_[MAX_BYTE_LEN];
-	};
 
 	class ReadMultipleHoldingRegistersReq {
 	  public:
