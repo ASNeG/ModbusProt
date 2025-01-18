@@ -127,8 +127,8 @@ namespace ModbusProt
 	bool
 	MemoryArea::setValue(uint16_t address, bool value)
 	{
-		uint16_t offset = (address - startAddress_) / 8;
-		uint8_t rest = (address - startAddress_) % 8;
+		uint16_t offset = address / 8;
+		uint8_t rest = address % 8;
 
 		if (value) {
 			memData_[offset] = memData_[offset] | (1 << rest);
@@ -143,7 +143,7 @@ namespace ModbusProt
 	bool
 	MemoryArea::setValue(uint16_t address, uint16_t value)
 	{
-		uint16_t offset = (address - startAddress_);
+		uint16_t offset = address;
 		((uint16_t*)memData_)[offset] = value;
 		return true;
 	}
@@ -151,8 +151,8 @@ namespace ModbusProt
 	bool
 	MemoryArea::getValue(uint16_t address, bool& value)
 	{
-		uint16_t offset = (address - startAddress_) / 8;
-		uint8_t rest = (address - startAddress_) % 8;
+		uint16_t offset = address / 8;
+		uint8_t rest = address % 8;
 
 		if ((memData_[offset] & (1 << rest)) != 0) {
 			value = 1;
@@ -167,7 +167,7 @@ namespace ModbusProt
 	bool
 	MemoryArea::getValue(uint16_t address, uint16_t& value)
 	{
-		uint16_t offset = (address - startAddress_);
+		uint16_t offset = address;
 		value = ((uint16_t*)memData_)[offset];
 		return true;
 	}
