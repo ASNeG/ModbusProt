@@ -190,16 +190,16 @@ namespace ModbusProt
 	bool
 	ModbusModel::registerMemoryAreaDefaults(void)
 	{
-		if (!registerMemoryArea(MemoryType::Coils, 1, 9999)) {
+		if (!registerMemoryArea(MemoryType::Coils, 0, 9999)) {
 			return false;
 		}
-		if (!registerMemoryArea(MemoryType::Inputs, 10001, 19999)) {
+		if (!registerMemoryArea(MemoryType::Inputs, 0, 9999)) {
 			return false;
 		}
-		if (!registerMemoryArea(MemoryType::InputRegisters, 30001, 39999)) {
+		if (!registerMemoryArea(MemoryType::InputRegisters, 0, 9999)) {
 			return false;
 		}
-		if (!registerMemoryArea(MemoryType::HoldingRegisters, 40001, 49999)) {
+		if (!registerMemoryArea(MemoryType::HoldingRegisters, 0, 9999)) {
 			return false;
 		}
 

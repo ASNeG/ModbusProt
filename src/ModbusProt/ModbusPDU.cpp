@@ -111,7 +111,6 @@ namespace ModbusProt
 		catch (std::istream::failure e) {
 			return false;
 		}
-		std::cout << "XXXX" << (uint32_t)funcCode  << std::endl;
 		if ((funcCode & 0x80) == 0x80) {
 			funcCode -= 0x80;
 			pduType_ = PDUType::Error;
