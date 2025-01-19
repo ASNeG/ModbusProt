@@ -26,6 +26,7 @@
 #include "ModbusProt/ReadInputRegistersPDU.h"
 #include "ModbusProt/ReadMultipleHoldingRegistersPDU.h"
 #include "ModbusProt/WriteSingleHoldingRegisterPDU.h"
+#include "ModbusProt/WriteMultipleHoldingRegistersPDU.h"
 
 namespace ModbusTCP
 {
@@ -90,6 +91,8 @@ namespace ModbusTCP
 				return handleReadMultipleHoldingRegistersReq(unitIdentifier, req, res);
 			case ModbusProt::PDUFunction::WriteSingleHoldingRegister:
 				return handleWriteSingleHoldingRegisterReq(unitIdentifier, req, res);
+			case ModbusProt::PDUFunction::WriteMultipleHoldingRegisters:
+				return handleWriteMultipleHoldingRegistersReq(unitIdentifier, req, res);
 		}
 
 		// Create error response
@@ -409,7 +412,7 @@ namespace ModbusTCP
 	{
 		bool rc = true;
 		auto readMultipleHoldingRegistersReq = std::static_pointer_cast<ModbusProt::ReadMultipleHoldingRegistersReqPDU>(req);
-		logHandler_->logList(Base::LogLevel::Debug, {"handle read input registers request"});
+		logHandler_->logList(Base::LogLevel::Debug, {"handle read multiple holding registers request"});
 
 		// Check if function exist
 		rc = modbusModel_->checkType(ModbusProt::MemoryType::HoldingRegisters);
@@ -469,7 +472,7 @@ namespace ModbusTCP
 	{
 		bool rc = true;
 		auto writeSingleHoldingRegisterReq = std::static_pointer_cast<ModbusProt::WriteSingleHoldingRegisterReqPDU>(req);
-		logHandler_->logList(Base::LogLevel::Debug, {"handle write single coil request"});
+		logHandler_->logList(Base::LogLevel::Debug, {"handle write single holding register request"});
 
 		// Check if function exist
 		rc = modbusModel_->checkType(ModbusProt::MemoryType::HoldingRegisters);
@@ -515,6 +518,66 @@ namespace ModbusTCP
 		writeSingleHoldingRegisterRes->registerValue(writeSingleHoldingRegisterReq->registerValue());
 		writeSingleHoldingRegisterRes->address(writeSingleHoldingRegisterReq->address());
 		res = writeSingleHoldingRegisterRes;
+
+		return true;
+	}
+
+	bool
+	TCPServerModel::handleWriteMultipleHoldingRegistersReq(
+		uint8_t unitIdentifier,
+		ModbusProt::ModbusPDU::SPtr& req,
+		ModbusProt::ModbusPDU::SPtr& res
+	)
+	{
+		bool rc = true;
+		auto writeMultipleHoldingRegistersReq = std::static_pointer_cast<ModbusProt::WriteMultipleHoldingRegistersReqPDU>(req);
+		logHandler_->logList(Base::LogLevel::Debug, {"handle write multiple holding registers request"});
+
+		// Check if function exist
+		rc = modbusModel_->checkType(ModbusProt::MemoryType::HoldingRegisters);
+		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {"memory model not exist"});
+			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_FUNC_UNKNWON);
+			return true;
+		}
+
+		// Check if address is valid
+		rc = modbusModel_->checkAddress(
+			ModbusProt::MemoryType::HoldingRegisters,
+			writeMultipleHoldingRegistersReq->startingAddress(),
+			1
+		);
+		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {
+				"address", std::to_string(writeMultipleHoldingRegistersReq->startingAddress()),
+				"not exist"
+			});
+			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_ADDRESS_UNKNWON);
+			return true;
+		}
+
+		// Create write multiple holding registers response
+		auto writeMultipleHoldingRegistersRes = std::make_shared<ModbusProt::WriteMultipleHoldingRegistersResPDU>();
+
+		// Set holding register data to memory area
+		uint16_t value[MAX_BYTE_LEN];
+		writeMultipleHoldingRegistersReq->getRegistersValue(writeMultipleHoldingRegistersReq->quantityOfRegisters(), value);
+		rc = modbusModel_->setValue(
+			ModbusProt::MemoryType::HoldingRegisters,
+			writeMultipleHoldingRegistersReq->startingAddress(),
+			(uint8_t*)&value,
+			writeMultipleHoldingRegistersReq->quantityOfRegisters()
+		);
+		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {
+				"processing write single coil request error"
+			});
+			res = TCPServerHandler::createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_PROCESSING_ERROR);
+			return true;
+		}
+		writeMultipleHoldingRegistersRes->quantityOfRegisters(writeMultipleHoldingRegistersReq->quantityOfRegisters());
+		writeMultipleHoldingRegistersRes->startingAddress(writeMultipleHoldingRegistersRes->startingAddress());
+		res = writeMultipleHoldingRegistersRes;
 
 		return true;
 	}
