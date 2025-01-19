@@ -104,30 +104,6 @@ namespace ModbusProt
 	};
 #if 0
 
-	class ReadMultipleHoldingRegistersReq {
-	  public:
-		uint16_t startingAddress_ = 0x00;
-		uint16_t quantityOfInputs_ = 0x00;
-	};
-
-	class ReadMultipleHoldingRegistersRes {
-	  public:
-		uint8_t byteCount_ = 0x00;
-		byte_t registerValue_[MAX_BYTE_LEN];
-	};
-
-	class ReadInputRegistersReq {
-	  public:
-		uint16_t startingAddress_ = 0x00;
-		uint16_t quantityOfInputRegisters_ = 0x00;
-	};
-
-	class ReadMultipleInputRegistersRes {
-	  public:
-		uint8_t byteCount_ = 0x00;
-		byte_t inputRegisters_[MAX_BYTE_LEN];
-	};
-
 	class WriteSingleHoldingReq {
 	  public:
 		uint16_t registerAddress_ = 0x00;
