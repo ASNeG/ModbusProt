@@ -25,6 +25,7 @@
 #include "ModbusProt/ReadDiscreteInputsPDU.h"
 #include "ModbusProt/ReadInputRegistersPDU.h"
 #include "ModbusProt/ReadMultipleHoldingRegistersPDU.h"
+#include "ModbusProt/WriteSingleHoldingRegisterPDU.h"
 
 namespace ModbusTCP
 {
@@ -87,6 +88,8 @@ namespace ModbusTCP
 				return handleReadInputRegistersReq(unitIdentifier, req, res);
 			case ModbusProt::PDUFunction::ReadMultipleHoldingRegisters:
 				return handleReadMultipleHoldingRegistersReq(unitIdentifier, req, res);
+			case ModbusProt::PDUFunction::WriteSingleHoldingRegister:
+				return handleWriteSingleHoldingRegisterReq(unitIdentifier, req, res);
 		}
 
 		// Create error response
@@ -455,6 +458,64 @@ namespace ModbusTCP
 
 		res = readMultipleHoldingRegistersRes;
 		return true;
+	}
+
+	bool
+	TCPServerModel::handleWriteSingleHoldingRegisterReq(
+		uint8_t unitIdentifier,
+		ModbusProt::ModbusPDU::SPtr& req,
+		ModbusProt::ModbusPDU::SPtr& res
+	)
+	{
+		bool rc = true;
+		auto writeSingleHoldingRegisterReq = std::static_pointer_cast<ModbusProt::WriteSingleHoldingRegisterReqPDU>(req);
+		logHandler_->logList(Base::LogLevel::Debug, {"handle write single coil request"});
+
+		// Check if function exist
+		rc = modbusModel_->checkType(ModbusProt::MemoryType::HoldingRegisters);
+		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {"memory model not exist"});
+			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_FUNC_UNKNWON);
+			return true;
+		}
+
+		// Check if address is valid
+		rc = modbusModel_->checkAddress(
+			ModbusProt::MemoryType::HoldingRegisters,
+			writeSingleHoldingRegisterReq->address(),
+			1
+		);
+		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {
+				"address", std::to_string(writeSingleHoldingRegisterReq->address()),
+				"not exist"
+			});
+			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_ADDRESS_UNKNWON);
+			return true;
+		}
+
+		// Create write single holding register response
+		auto writeSingleHoldingRegisterRes = std::make_shared<ModbusProt::WriteSingleHoldingRegisterResPDU>();
+
+		// Set coil data to memory area
+		uint16_t value = writeSingleHoldingRegisterRes->registerValue();
+		rc = modbusModel_->setValue(
+			ModbusProt::MemoryType::HoldingRegisters,
+			writeSingleHoldingRegisterReq->address(),
+			(uint8_t*)&value,
+			1
+		);
+		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {
+				"processing write single coil request error"
+			});
+			res = TCPServerHandler::createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_PROCESSING_ERROR);
+			return true;
+		}
+		writeSingleHoldingRegisterRes->registerValue(writeSingleHoldingRegisterReq->registerValue());
+		writeSingleHoldingRegisterRes->address(writeSingleHoldingRegisterReq->address());
+		res = writeSingleHoldingRegisterRes;
+
 		return true;
 	}
 
