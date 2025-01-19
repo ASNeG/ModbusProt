@@ -24,6 +24,7 @@
 #include "ModbusTCP/TCPServerModel.h"
 #include "ModbusProt/ReadDiscreteInputsPDU.h"
 #include "ModbusProt/ReadInputRegistersPDU.h"
+#include "ModbusProt/ReadMultipleHoldingRegistersPDU.h"
 
 namespace ModbusTCP
 {
@@ -84,6 +85,8 @@ namespace ModbusTCP
 				return handleReadDiscreteInputsReq(unitIdentifier, req, res);
 			case ModbusProt::PDUFunction::ReadInputRegisters:
 				return handleReadInputRegistersReq(unitIdentifier, req, res);
+			case ModbusProt::PDUFunction::ReadMultipleHoldingRegisters:
+				return handleReadMultipleHoldingRegistersReq(unitIdentifier, req, res);
 		}
 
 		// Create error response
@@ -391,6 +394,67 @@ namespace ModbusTCP
 		readInputRegistersRes->setInputRegisters(readInputRegistersReq->quantityOfInputs(), (uint16_t*)value);
 
 		res = readInputRegistersRes;
+		return true;
+	}
+
+	bool
+	TCPServerModel::handleReadMultipleHoldingRegistersReq(
+		uint8_t unitIdentifier,
+		ModbusProt::ModbusPDU::SPtr& req,
+		ModbusProt::ModbusPDU::SPtr& res
+	)
+	{
+		bool rc = true;
+		auto readMultipleHoldingRegistersReq = std::static_pointer_cast<ModbusProt::ReadMultipleHoldingRegistersReqPDU>(req);
+		logHandler_->logList(Base::LogLevel::Debug, {"handle read input registers request"});
+
+		// Check if function exist
+		rc = modbusModel_->checkType(ModbusProt::MemoryType::HoldingRegisters);
+		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {"memory model not exist"});
+			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_FUNC_UNKNWON);
+			return true;
+		}
+
+		// Check if address is valid
+		rc = modbusModel_->checkAddress(
+			ModbusProt::MemoryType::HoldingRegisters,
+			readMultipleHoldingRegistersReq->startingAddress(),
+			readMultipleHoldingRegistersReq->quantityOfInputs()
+		);
+		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {
+				"starting address", std::to_string(readMultipleHoldingRegistersReq->startingAddress()),
+				"with range", std::to_string(readMultipleHoldingRegistersReq->quantityOfInputs()),
+				"not exist"
+			});
+			res = createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_ADDRESS_UNKNWON);
+			return true;
+		}
+
+		// Create modbus response
+		auto readMultipleHoldingRegistersRes = std::make_shared<ModbusProt::ReadMultipleHoldingRegistersResPDU>();
+
+		// Get coil data from memory area
+		uint8_t value[MAX_BYTE_LEN];
+		memset((char*)&value, 0x00, MAX_BYTE_LEN);
+		rc = modbusModel_->getValue(
+			ModbusProt::MemoryType::HoldingRegisters,
+			readMultipleHoldingRegistersReq->startingAddress(),
+			value,
+			readMultipleHoldingRegistersReq->quantityOfInputs()
+		);
+		if (!rc) {
+			logHandler_->logList(Base::LogLevel::Error, {
+				"processing read input registers request error"
+			});
+			res = TCPServerHandler::createErrorPDU(req->pduFunction(), ModbusProt::ErrorPDU::ExceptionCode::EC_PROCESSING_ERROR);
+			return true;
+		}
+		readMultipleHoldingRegistersRes->setHoldingRegisters(readMultipleHoldingRegistersReq->quantityOfInputs(), (uint16_t*)value);
+
+		res = readMultipleHoldingRegistersRes;
+		return true;
 		return true;
 	}
 
