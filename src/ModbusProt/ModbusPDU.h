@@ -104,18 +104,6 @@ namespace ModbusProt
 	};
 #if 0
 
-	class WriteSingleHoldingReq {
-	  public:
-		uint16_t registerAddress_ = 0x00;
-		uint16_t registerValue_ = 0x00;
-	};
-
-	class WriteSingleHoldingRes {
-	  public:
-		uint16_t registerAddress_ =  0x00;
-		uint16_t registerValue_ = 0x00;
-	};
-
 	class WriteMultiHoldingRegistersReq {
 	  public:
 		uint16_t startingAddress_ = 0x00;

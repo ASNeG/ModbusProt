@@ -29,6 +29,7 @@ namespace ModbusProt
 		{ PDUFunction::ReadMultipleHoldingRegisters, 0x03},
 		{ PDUFunction::ReadInputRegisters, 0x04 },
 		{ PDUFunction::WriteSingleCoil, 0x05 },
+		{ PDUFunction::WriteSingleHoldingRegister, 0x06 },
 		{ PDUFunction::WriteMultipleCoils, 0x0F }
 	};
 
