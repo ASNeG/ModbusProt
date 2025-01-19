@@ -501,7 +501,7 @@ namespace ModbusTCP
 		auto writeSingleHoldingRegisterRes = std::make_shared<ModbusProt::WriteSingleHoldingRegisterResPDU>();
 
 		// Set coil data to memory area
-		uint16_t value = writeSingleHoldingRegisterRes->registerValue();
+		uint16_t value = writeSingleHoldingRegisterReq->registerValue();
 		rc = modbusModel_->setValue(
 			ModbusProt::MemoryType::HoldingRegisters,
 			writeSingleHoldingRegisterReq->address(),

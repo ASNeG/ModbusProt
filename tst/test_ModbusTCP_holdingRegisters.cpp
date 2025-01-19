@@ -128,7 +128,6 @@ namespace TestModbusTCP_HoldingRegisters
     		// Check contents of write single holding register response
     		auto writeSingleHoldingRegisterRes = std::static_pointer_cast<ModbusProt::WriteSingleHoldingRegisterResPDU>(res_);
     		CPUNIT_ASSERT(writeSingleHoldingRegisterRes->address() == address);
-    		std::cout << "XXXX " << (uint32_t)writeSingleHoldingRegisterRes->registerValue() << std::endl;
     		CPUNIT_ASSERT(writeSingleHoldingRegisterRes->registerValue() == address);
     	}
 

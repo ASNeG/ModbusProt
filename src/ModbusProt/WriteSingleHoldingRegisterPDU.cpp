@@ -75,7 +75,7 @@ namespace ModbusProt
 			uint16_t address = ByteOrder::toBig(address_);
 			os.write((char*)&address, 2);
 			uint16_t registerValue = ByteOrder::toBig(registerValue_);
-			os.write((char*)&registerValue_, 2);
+			os.write((char*)&registerValue, 2);
 		}
 		catch (std::ostream::failure e) {
 			return false;
