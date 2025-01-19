@@ -30,7 +30,8 @@ namespace ModbusProt
 		{ PDUFunction::ReadInputRegisters, 0x04 },
 		{ PDUFunction::WriteSingleCoil, 0x05 },
 		{ PDUFunction::WriteSingleHoldingRegister, 0x06 },
-		{ PDUFunction::WriteMultipleCoils, 0x0F }
+		{ PDUFunction::WriteMultipleCoils, 0x0F },
+		{ PDUFunction::WriteMultipleHoldingRegisters, 0x10 }
 	};
 
 	std::string

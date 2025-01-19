@@ -25,6 +25,7 @@
 #include "ReadInputRegistersPDU.h"
 #include "ReadMultipleHoldingRegistersPDU.h"
 #include "WriteSingleHoldingRegisterPDU.h"
+#include "WriteMultipleHoldingRegistersPDU.h"
 
 namespace ModbusProt
 {
@@ -64,6 +65,10 @@ namespace ModbusProt
 			case static_cast<int>(PDUFunction::WriteSingleHoldingRegister):
 				if (pduType == PDUType::Request) return std::make_shared<WriteSingleHoldingRegisterReqPDU>();
 				else return std::make_shared<WriteSingleHoldingRegisterResPDU>();
+				break;
+			case static_cast<int>(PDUFunction::WriteMultipleHoldingRegisters):
+				if (pduType == PDUType::Request) return std::make_shared<WriteMultipleHoldingRegistersReqPDU>();
+				else return std::make_shared<WriteMultipleHoldingRegistersResPDU>();
 				break;
 			default:
 				return nullptr;

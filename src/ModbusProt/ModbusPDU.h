@@ -102,22 +102,6 @@ namespace ModbusProt
 		PDUFunction pduFunction_ = PDUFunction::None;
 		PDUType pduType_ = PDUType::None;
 	};
-#if 0
-
-	class WriteMultiHoldingRegistersReq {
-	  public:
-		uint16_t startingAddress_ = 0x00;
-		uint16_t quantityOfRegisters_ = 0x00;
-		uint8_t byteCount_ = 0x00;
-		byte_t registersValue_[MAX_BYTE_LEN];
-	};
-
-	class WriteMultiHoldingRegistersRes {
-	  public:
-		uint16_t startingAddress_ =  0x00;
-		uint16_t quantityOfRegisters_ = 0x00;
-	};
-#endif
 
 }
 
