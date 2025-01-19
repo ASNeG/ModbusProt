@@ -23,6 +23,7 @@
 #include "WriteMultipleCoilsPDU.h"
 #include "ReadDiscreteInputsPDU.h"
 #include "ReadInputRegistersPDU.h"
+#include "ReadMultipleHoldingRegistersPDU.h"
 
 namespace ModbusProt
 {
@@ -54,6 +55,10 @@ namespace ModbusProt
 			case static_cast<int>(PDUFunction::ReadInputRegisters):
 				if (pduType == PDUType::Request) return std::make_shared<ReadInputRegistersReqPDU>();
 				else return std::make_shared<ReadInputRegistersResPDU>();
+				break;
+			case static_cast<int>(PDUFunction::ReadMultipleHoldingRegisters):
+				if (pduType == PDUType::Request) return std::make_shared<ReadMultipleHoldingRegistersReqPDU>();
+				else return std::make_shared<ReadMultipleHoldingRegistersResPDU>();
 				break;
 			default:
 				return nullptr;
