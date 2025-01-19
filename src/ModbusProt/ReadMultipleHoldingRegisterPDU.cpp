@@ -176,8 +176,8 @@ namespace ModbusProt
 	ReadMultipleHoldingRegistersResPDU::getHoldingRegisters(uint16_t idx, uint16_t& value)
 	{
 		// Check index
-		if (idx*2 >= MAX_BYTE_LEN) return false;
-		if (idx*2 >= byteCount_) return false;
+		if (idx*2 > MAX_BYTE_LEN) return false;
+		if (idx*2 > byteCount_) return false;
 
 		// Get data
 		uint8_t byteIdx = idx / 8;

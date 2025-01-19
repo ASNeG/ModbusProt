@@ -545,7 +545,7 @@ namespace ModbusTCP
 		rc = modbusModel_->checkAddress(
 			ModbusProt::MemoryType::HoldingRegisters,
 			writeMultipleHoldingRegistersReq->startingAddress(),
-			1
+			writeMultipleHoldingRegistersReq->quantityOfRegisters()
 		);
 		if (!rc) {
 			logHandler_->logList(Base::LogLevel::Error, {
@@ -560,7 +560,7 @@ namespace ModbusTCP
 		auto writeMultipleHoldingRegistersRes = std::make_shared<ModbusProt::WriteMultipleHoldingRegistersResPDU>();
 
 		// Set holding register data to memory area
-		uint16_t value[MAX_BYTE_LEN];
+		uint16_t value[MAX_BYTE_LEN/2];
 		writeMultipleHoldingRegistersReq->getRegistersValue(writeMultipleHoldingRegistersReq->quantityOfRegisters(), value);
 		rc = modbusModel_->setValue(
 			ModbusProt::MemoryType::HoldingRegisters,
@@ -576,7 +576,7 @@ namespace ModbusTCP
 			return true;
 		}
 		writeMultipleHoldingRegistersRes->quantityOfRegisters(writeMultipleHoldingRegistersReq->quantityOfRegisters());
-		writeMultipleHoldingRegistersRes->startingAddress(writeMultipleHoldingRegistersRes->startingAddress());
+		writeMultipleHoldingRegistersRes->startingAddress(writeMultipleHoldingRegistersReq->startingAddress());
 		res = writeMultipleHoldingRegistersRes;
 
 		return true;

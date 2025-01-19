@@ -41,7 +41,6 @@ namespace ModbusProt
 		bool setRegistersValue(uint16_t idx, uint16_t value);
 		bool getRegistersValue(uint16_t count, uint16_t* value);
 		bool getRegistersValue(uint16_t idx, uint16_t& value);
-		uint8_t* outputsValue(void);
 
 		virtual bool encode(std::ostream& os) const override;
 		virtual bool decode(std::istream& is) override;
@@ -50,7 +49,7 @@ namespace ModbusProt
 		uint16_t startingAddress_ = 0x00;
 		uint16_t quantityOfRegisters_ = 0x00;
 		uint8_t byteCount_ = 0x00;
-		byte_t registersValue_[MAX_BYTE_LEN];
+		uint16_t registersValue_[MAX_BYTE_LEN/2];
 	};
 
 

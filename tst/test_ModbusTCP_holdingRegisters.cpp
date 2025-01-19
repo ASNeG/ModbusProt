@@ -131,16 +131,15 @@ namespace TestModbusTCP_HoldingRegisters
     		CPUNIT_ASSERT(writeSingleHoldingRegisterRes->registerValue() == address);
     	}
 
-#if 0
-    	// Read coil request (single bit)
-    	for (uint16_t addres = 1; addres < 100; addres++) {
+    	// Read holding register request (single value)
+    	for (uint16_t address = 1; address < 100; address++) {
     		responseCondition_.init();
 
     		// Create and send read coil request
-    		auto readHoldingRegistersReq = std::make_shared<ModbusProt::ReadHoldingRegistersReqPDU>();
-    		readHoldingRegistersReq->startingAddres(addres);
-    		readHoldingRegistersReq->quantityOfInputs(1);
-    		ModbusProt::ModbusPDU::SPtr req = readHoldingRegistersReq;
+    		auto readMultipleHoldingRegistersReq = std::make_shared<ModbusProt::ReadMultipleHoldingRegistersReqPDU>();
+    		readMultipleHoldingRegistersReq->startingAddress(address);
+    		readMultipleHoldingRegistersReq->quantityOfInputs(1);
+    		ModbusProt::ModbusPDU::SPtr req = readMultipleHoldingRegistersReq;
     		client.send(0, req, responseCallback);
     		CPUNIT_ASSERT(responseCondition_.wait(3000) == true);
 
@@ -148,23 +147,24 @@ namespace TestModbusTCP_HoldingRegisters
     		CPUNIT_ASSERT(modbusError_ == ModbusProt::ModbusError::Ok);
     		CPUNIT_ASSERT(res_ != nullptr);
     		CPUNIT_ASSERT(res_->pduType() == ModbusProt::PDUType::Response);
-    		CPUNIT_ASSERT(req_->pduFunction() == ModbusProt::PDUFunction::ReadHoldingRegisters);
+    		CPUNIT_ASSERT(req_->pduFunction() == ModbusProt::PDUFunction::ReadMultipleHoldingRegisters);
 
-    		// Check contents of write single coil response
-    		auto readHoldingRegistersRes = std::static_pointer_cast<ModbusProt::ReadHoldingRegistersResPDU>(res_);
-    		CPUNIT_ASSERT(readHoldingRegistersRes->byteCount() == 1);
-    		uint8_t b; CPUNIT_ASSERT(readHoldingRegistersRes->getHoldingRegistersStatus(1, &b) == true);
-    		CPUNIT_ASSERT(b == (addres % 3 == 0 ? 0x01 : 0x00));
+    		// Check contents of read multiple holding registers response
+    		auto readMultipleHoldingRegistersRes = std::static_pointer_cast<ModbusProt::ReadMultipleHoldingRegistersResPDU>(res_);
+    		CPUNIT_ASSERT(readMultipleHoldingRegistersRes->byteCount() == 2);
+    		uint16_t val;
+    		CPUNIT_ASSERT(readMultipleHoldingRegistersRes->getHoldingRegisters(1, &val) == true);
+    		CPUNIT_ASSERT(val == address);
     	}
 
-    	// Read coil request (all bits)
+    	// Read holding register request (all bits)
     	responseCondition_.init();
 
-    	// Create and send read coil request
-    	auto readHoldingRegistersReq = std::make_shared<ModbusProt::ReadHoldingRegistersReqPDU>();
-    	readHoldingRegistersReq->startingAddres(1);
-    	readHoldingRegistersReq->quantityOfInputs(100);
-    	ModbusProt::ModbusPDU::SPtr req = readHoldingRegistersReq;
+    	// Create and send read multiple holding registers request
+    	auto readMultipleHoldingRegistersReq = std::make_shared<ModbusProt::ReadMultipleHoldingRegistersReqPDU>();
+    	readMultipleHoldingRegistersReq->startingAddress(1);
+    	readMultipleHoldingRegistersReq->quantityOfInputs(100);
+    	ModbusProt::ModbusPDU::SPtr req = readMultipleHoldingRegistersReq;
     	client.send(0, req, responseCallback);
     	CPUNIT_ASSERT(responseCondition_.wait(3000) == true);
 
@@ -172,29 +172,25 @@ namespace TestModbusTCP_HoldingRegisters
     	CPUNIT_ASSERT(modbusError_ == ModbusProt::ModbusError::Ok);
     	CPUNIT_ASSERT(res_ != nullptr);
     	CPUNIT_ASSERT(res_->pduType() == ModbusProt::PDUType::Response);
-    	CPUNIT_ASSERT(req_->pduFunction() == ModbusProt::PDUFunction::ReadHoldingRegisters);
+    	CPUNIT_ASSERT(req_->pduFunction() == ModbusProt::PDUFunction::ReadMultipleHoldingRegisters);
 
-    	// Check contents of write single coil response
-    	auto readHoldingRegistersRes = std::static_pointer_cast<ModbusProt::ReadHoldingRegistersResPDU>(res_);
-    	CPUNIT_ASSERT(readHoldingRegistersRes->byteCount() == ((99/8)+1));
+    	// Check contents of read multiple holding registers response
+    	auto readMultipleHoldingRegistersRes = std::static_pointer_cast<ModbusProt::ReadMultipleHoldingRegistersResPDU>(res_);
+    	CPUNIT_ASSERT(readMultipleHoldingRegistersRes->byteCount() == 200);
     	for (uint16_t idx = 0; idx < 99; idx++) {
-    		bool b; CPUNIT_ASSERT(readHoldingRegistersRes->getHoldingRegistersStatus(idx, b) == true);
+    		uint16_t val;
+    		CPUNIT_ASSERT(readMultipleHoldingRegistersRes->getHoldingRegisters(idx, val) == true);
     	}
 
-    	uint8_t value[MAX_BYTE_LEN];
-    	memset((char*)&value, 0x00, MAX_BYTE_LEN);
-    	CPUNIT_ASSERT(readHoldingRegistersRes->getHoldingRegistersStatus(99, value) == true);
+    	uint16_t value[MAX_BYTE_LEN/2];
+    	memset((char*)&value, 0x00, MAX_BYTE_LEN/2);
+    	CPUNIT_ASSERT(readMultipleHoldingRegistersRes->getHoldingRegisters(99, value) == true);
     	for (uint16_t idx = 0; idx < 99; idx++) {
-    		uint8_t offset = idx / 8;
-    		uint8_t rest = idx % 8;
-    		bool b = (value[offset] & (1<<rest)) != 0;
-    		CPUNIT_ASSERT(b == ((idx+1) % 3 == 0 ? true : false));
+    		CPUNIT_ASSERT(value[idx] = idx+1);
     	}
-#endif
     }
 
-#if 0
-    CPUNIT_TEST(TestModbusTCP_HoldingRegisters, write_multiple_coil)
+    CPUNIT_TEST(TestModbusTCP_HoldingRegisters, write_multiple_holding_registers)
 	{
     	asio::ip::tcp::endpoint serverEndpoint;
 
@@ -219,12 +215,12 @@ namespace TestModbusTCP_HoldingRegisters
     	CPUNIT_ASSERT(clientStateVec_[0] == TCPClientState::Connecting);
     	CPUNIT_ASSERT(clientStateVec_[1] == TCPClientState::Connected);
 
-		// Create and send write multiple coil request
+		// Create and send write multiple holding registers request
 		auto writeMultipleHoldingRegistersReq = std::make_shared<ModbusProt::WriteMultipleHoldingRegistersReqPDU>();
-		writeMultipleHoldingRegistersReq->startingAddres(1);
-		writeMultipleHoldingRegistersReq->quantityOfOutputs(100);
-		for (uint16_t addres = 1; addres <= 100; addres++) {
-			writeMultipleHoldingRegistersReq->setOutputsValue(addres-1, addres % 3 == 0 ? true : false);
+		writeMultipleHoldingRegistersReq->startingAddress(1);
+		writeMultipleHoldingRegistersReq->quantityOfRegisters(100);
+		for (uint16_t address = 1; address <= 100; address++) {
+			writeMultipleHoldingRegistersReq->setRegistersValue(address-1, address);
 		}
 		ModbusProt::ModbusPDU::SPtr req0 = writeMultipleHoldingRegistersReq;
 		client.send(0, req0, responseCallback);
@@ -238,42 +234,43 @@ namespace TestModbusTCP_HoldingRegisters
 
 		// Check contents of write single coil response
 		auto writeMultipleHoldingRegistersRes = std::static_pointer_cast<ModbusProt::WriteMultipleHoldingRegistersResPDU>(res_);
-		CPUNIT_ASSERT(writeMultipleHoldingRegistersRes->startingAddres() == 1);
-		CPUNIT_ASSERT(writeMultipleHoldingRegistersRes->quantityOfOutputs() == 100);
+		CPUNIT_ASSERT(writeMultipleHoldingRegistersRes->startingAddress() == 1);
+		CPUNIT_ASSERT(writeMultipleHoldingRegistersRes->quantityOfRegisters() == 100);
 
-    	// Read coil request (single bit)
-    	for (uint16_t addres = 1; addres < 100; addres++) {
+    	// Read holding register request (single bit)
+    	for (uint16_t address = 1; address < 100; address++) {
     		responseCondition_.init();
 
-    		// Create and send read coil request
-    		auto readHoldingRegistersReq = std::make_shared<ModbusProt::ReadHoldingRegistersReqPDU>();
-    		readHoldingRegistersReq->startingAddres(addres);
-    		readHoldingRegistersReq->quantityOfInputs(1);
-    		ModbusProt::ModbusPDU::SPtr req = readHoldingRegistersReq;
+    		// Create and send read multiple holding register request
+    		auto readMultipleHoldingRegistersReq = std::make_shared<ModbusProt::ReadMultipleHoldingRegistersReqPDU>();
+    		readMultipleHoldingRegistersReq->startingAddress(address);
+    		readMultipleHoldingRegistersReq->quantityOfInputs(1);
+    		ModbusProt::ModbusPDU::SPtr req = readMultipleHoldingRegistersReq;
     		client.send(0, req, responseCallback);
     		CPUNIT_ASSERT(responseCondition_.wait(3000) == true);
 
-    		// Receive and check write single coil response
+    		// Receive and check response
     		CPUNIT_ASSERT(modbusError_ == ModbusProt::ModbusError::Ok);
     		CPUNIT_ASSERT(res_ != nullptr);
     		CPUNIT_ASSERT(res_->pduType() == ModbusProt::PDUType::Response);
-    		CPUNIT_ASSERT(req_->pduFunction() == ModbusProt::PDUFunction::ReadHoldingRegisters);
+    		CPUNIT_ASSERT(req_->pduFunction() == ModbusProt::PDUFunction::ReadMultipleHoldingRegisters);
 
-    		// Check contents of write single coil response
-    		auto readHoldingRegistersRes = std::static_pointer_cast<ModbusProt::ReadHoldingRegistersResPDU>(res_);
-    		CPUNIT_ASSERT(readHoldingRegistersRes->byteCount() == 1);
-    		uint8_t b; CPUNIT_ASSERT(readHoldingRegistersRes->getHoldingRegistersStatus(1, &b) == true);
-    		CPUNIT_ASSERT(b == (addres % 3 == 0 ? 0x01 : 0x00));
+    		// Check contents of response
+    		auto readMultipleHoldingRegistersRes = std::static_pointer_cast<ModbusProt::ReadMultipleHoldingRegistersResPDU>(res_);
+    		CPUNIT_ASSERT(readMultipleHoldingRegistersRes->byteCount() == 2);
+    		uint16_t val;
+    		CPUNIT_ASSERT(readMultipleHoldingRegistersRes->getHoldingRegisters(0, val) == true);
+    		CPUNIT_ASSERT(val == address);
     	}
 
-    	// Read coil request (all bits)
+    	// Read holding registers request (all bits)
     	responseCondition_.init();
 
     	// Create and send read coil request
-    	auto readHoldingRegistersReq = std::make_shared<ModbusProt::ReadHoldingRegistersReqPDU>();
-    	readHoldingRegistersReq->startingAddres(1);
-    	readHoldingRegistersReq->quantityOfInputs(100);
-    	ModbusProt::ModbusPDU::SPtr req = readHoldingRegistersReq;
+    	auto readMultipleHoldingRegistersReq = std::make_shared<ModbusProt::ReadMultipleHoldingRegistersReqPDU>();
+    	readMultipleHoldingRegistersReq->startingAddress(1);
+    	readMultipleHoldingRegistersReq->quantityOfInputs(100);
+    	ModbusProt::ModbusPDU::SPtr req = readMultipleHoldingRegistersReq;
     	client.send(0, req, responseCallback);
     	CPUNIT_ASSERT(responseCondition_.wait(3000) == true);
 
@@ -281,24 +278,21 @@ namespace TestModbusTCP_HoldingRegisters
     	CPUNIT_ASSERT(modbusError_ == ModbusProt::ModbusError::Ok);
     	CPUNIT_ASSERT(res_ != nullptr);
     	CPUNIT_ASSERT(res_->pduType() == ModbusProt::PDUType::Response);
-    	CPUNIT_ASSERT(req_->pduFunction() == ModbusProt::PDUFunction::ReadHoldingRegisters);
+    	CPUNIT_ASSERT(req_->pduFunction() == ModbusProt::PDUFunction::ReadMultipleHoldingRegisters);
 
     	// Check contents of write single coil response
-    	auto readHoldingRegistersRes = std::static_pointer_cast<ModbusProt::ReadHoldingRegistersResPDU>(res_);
-    	CPUNIT_ASSERT(readHoldingRegistersRes->byteCount() == ((99/8)+1));
-    	for (uint16_t idx = 0; idx < 99; idx++) {
-    		bool b; CPUNIT_ASSERT(readHoldingRegistersRes->getHoldingRegistersStatus(idx, b) == true);
+    	auto readMultipleHoldingRegistersRes = std::static_pointer_cast<ModbusProt::ReadMultipleHoldingRegistersResPDU>(res_);
+    	CPUNIT_ASSERT(readMultipleHoldingRegistersRes->byteCount() == 200);
+    	for (uint16_t idx = 0; idx < 100; idx++) {
+    		uint16_t val;
+    		CPUNIT_ASSERT(readMultipleHoldingRegistersRes->getHoldingRegisters(idx, val) == true);
     	}
 
-    	uint8_t value[MAX_BYTE_LEN];
+    	uint16_t value[MAX_BYTE_LEN/2];
     	memset((char*)&value, 0x00, MAX_BYTE_LEN);
-    	CPUNIT_ASSERT(readHoldingRegistersRes->getHoldingRegistersStatus(99, value) == true);
+    	CPUNIT_ASSERT(readMultipleHoldingRegistersRes->getHoldingRegisters(99, value) == true);
     	for (uint16_t idx = 0; idx < 99; idx++) {
-    		uint8_t offset = idx / 8;
-    		uint8_t rest = idx % 8;
-    		bool b = (value[offset] & (1<<rest)) != 0;
-    		CPUNIT_ASSERT(b == ((idx+1) % 3 == 0 ? true : false));
+    		CPUNIT_ASSERT(value[idx] == idx+1);
     	}
     }
-#endif
 }

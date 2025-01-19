@@ -118,12 +118,6 @@ namespace ModbusProt
 		return true;
 	}
 
-	uint8_t*
-	WriteMultipleHoldingRegistersReqPDU::outputsValue(void)
-	{
-		return registersValue_;
-	}
-
 	bool
 	WriteMultipleHoldingRegistersReqPDU::encode(std::ostream& os) const
 	{
@@ -160,7 +154,7 @@ namespace ModbusProt
 			quantityOfRegisters_ = ByteOrder::fromBig(quantityOfRegisters_);
 
 			is.read((char*)&byteCount_, 1);
-			if (byteCount_ > MAX_BYTE_LEN) return false;
+			if (byteCount_ > (MAX_BYTE_LEN/2)) return false;
 			is.read((char*)&registersValue_, (uint32_t)byteCount_);
 		}
 		catch (std::istream::failure e) {
