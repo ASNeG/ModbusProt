@@ -5,12 +5,15 @@ set(CMAKE_CXX_STANDARD 20)
 
 
 option(PROJ_UNIT_TEST "Enable/Disable unittest (Default: OFF)" ON)
+option(PROJ_HANDLER_TRACKING "Enable/Disable handler tracking (Default: OFF)" ON)
 
 
 set(CPUNIT_ROOT_DIR "${CMAKE_SOURCE_DIR}/../cpunit" CACHE STRING "cpunit root directory")
 set(ASIO_ROOT_DIR "${CMAKE_SOURCE_DIR}/../asio-1.30.2" CACHE STRING "asio root directory")
 
-add_compile_options(-DASIO_ENABLE_HANDLER_TRACKING)
+if (${PROJ_HANDLER_TRACKING} STREQUAL "ON")
+    add_compile_options(-DASIO_ENABLE_HANDLER_TRACKING)
+endif ()
 
 include(src/CMakeLists.txt)
 
