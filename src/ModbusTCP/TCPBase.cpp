@@ -78,6 +78,18 @@ namespace ModbusTCP
 		return true;
 	}
 
+	bool
+	TCPBase::getEndpoint(
+		const std::string& ipAddress,
+		uint32_t port,
+		asio::ip::tcp::endpoint& endpoint
+	)
+	{
+		std::stringstream ss;
+		ss << port;
+		return getEndpoint(ipAddress, ss.str(), endpoint);
+	}
+
 	void TCPBase::startThread(void)
 	{
 		work_ = new asio::io_context::work(ctx());

@@ -51,6 +51,11 @@ namespace ModbusTCP
 			const std::string& port,
 			asio::ip::tcp::endpoint& endpoint
 		);
+		bool getEndpoint(
+			const std::string& ipAddress,
+			uint32_t port,
+			asio::ip::tcp::endpoint& endpoint
+		);
 
 	  protected:
 		Base::LogHandler::SPtr logHandler_ = std::make_shared<Base::LogDefault>();
