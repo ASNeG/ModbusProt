@@ -1,5 +1,6 @@
 
 include_directories(
+    ${CMAKE_CURRENT_LIST_DIR}
     ${CMAKE_SOURCE_DIR}
     ${ASIO_ROOT_DIR}/include 
 )
