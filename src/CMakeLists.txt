@@ -32,13 +32,37 @@ add_library(
     $<TARGET_OBJECTS:ModbusProt>
 )
 
-add_executable(
-    analyse 
-    ${CMAKE_CURRENT_LIST_DIR}/Analyse/main.cpp
-)
+if (${PROJ_UNIT_TEST} STREQUAL "ON")
+    add_executable(
+        analyse 
+        ${CMAKE_CURRENT_LIST_DIR}/Analyse/main.cpp
+    )
+    
+    add_executable(
+        channel 
+        ${CMAKE_CURRENT_LIST_DIR}/Analyse/Channel.cpp
+    )
+endif()
 
-add_executable(
-    channel 
-    ${CMAKE_CURRENT_LIST_DIR}/Analyse/Channel.cpp
+# ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+#
+# installation
+#
+# ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+install(
+    TARGETS ModbusProt_static 
+    DESTINATION lib
+)
+install(
+    TARGETS ModbusProt_shared 
+    DESTINATION lib
+)
+install(
+    DIRECTORY ${CMAKE_SOURCE_DIR}/src/
+    DESTINATION include/ModbusProt
+    FILES_MATCHING PATTERN "*.h*" 
+                   PATTERN "Analyse" EXCLUDE
 )
 
