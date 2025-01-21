@@ -284,7 +284,6 @@ namespace ModbusTCP
 		if (result.index() == 1) {
 			auto [e, n] = std::get<1>(result);
 			if (e) {
-				socket_->close();
 				logHandler_->logList(Base::LogLevel::Error, {"receive socket error:", e.message()});
 				co_return Result::EndOfFile;
 			}
@@ -372,6 +371,7 @@ namespace ModbusTCP
 		timer_ = std::make_shared<asio::steady_timer>(co_await asio::this_coro::executor);
 		socket_ = std::make_shared<asio::ip::tcp::socket>(co_await asio::this_coro::executor);
 
+		shutdown_ = false;
 		while(true) {
 
 			// Connect to server
@@ -394,7 +394,7 @@ namespace ModbusTCP
 					co_return;
 				}
 				else if (result == Result::EndOfFile) {
-					if (reconnectTimeout_ == 0) {
+					if (reconnectTimeout_ == 0 || shutdown_ == true) {
 						// Set close state
 						timer_ = nullptr;
 						socket_ = nullptr;

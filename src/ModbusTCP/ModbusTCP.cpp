@@ -156,11 +156,6 @@ namespace ModbusTCP
 			length_ = ByteOrder::fromBig(length) - 1;
 
 			is.read((char*)&unitIdentifier_, 1);
-
-			std::cout << "XXXX1 " << (uint32_t)transactionIdentifier_  << std::endl;
-			std::cout << "XXXX2 " << (uint32_t)protocolIdentifier_  << std::endl;
-			std::cout << "XXXX3 " << (uint32_t)length_  << std::endl;
-			std::cout << "XXXX4 " << (uint32_t)unitIdentifier_  << std::endl;
 		}
 		catch (std::ostream::failure e) {
 			return false;

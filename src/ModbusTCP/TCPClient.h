@@ -91,6 +91,7 @@ namespace ModbusTCP
 		std::mutex mutex_;
 		bool clientLoopReady_ = false;
 		TCPClientState tcpClientState_ = TCPClientState::Init;
+		bool shutdown_ = false;
 
 		std::shared_ptr<asio::ip::tcp::socket> socket_ = nullptr;
 		std::shared_ptr<asio::steady_timer> timer_ = nullptr;
