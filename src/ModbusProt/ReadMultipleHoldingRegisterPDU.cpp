@@ -125,7 +125,7 @@ namespace ModbusProt
 	ReadMultipleHoldingRegistersResPDU::reset(void)
 	{
 		byteCount_ =  0;
-		memset((char*)holdingRegisters, 0x00, MAX_BYTE_LEN);
+		memset((char*)holdingRegisters_, 0x00, MAX_BYTE_LEN);
 	}
 
 	uint8_t
@@ -141,7 +141,7 @@ namespace ModbusProt
 		if (count == 0 || count*2 > MAX_BYTE_LEN) return false;
 
 		byteCount_ = count * 2;
-		memcpy(holdingRegisters, value, byteCount_);
+		memcpy(holdingRegisters_, value, byteCount_);
 		return true;
 	}
 
@@ -152,7 +152,7 @@ namespace ModbusProt
 		if (idx*2 >= MAX_BYTE_LEN) return false;
 
 		// Set data
-		holdingRegisters[idx] = value;
+		holdingRegisters_[idx] = value;
 		if (byteCount_ < ((idx+1)*2)) byteCount_ = ((idx+1)*2);
 
 		return true;
@@ -167,7 +167,7 @@ namespace ModbusProt
 		if (count*2 > byteCount_) return false;
 
 		uint8_t byteCount = count*2;
-		memcpy(value, holdingRegisters, byteCount);
+		memcpy(value, holdingRegisters_, byteCount);
 
 		return true;
 	}
@@ -183,7 +183,7 @@ namespace ModbusProt
 		uint8_t byteIdx = idx / 8;
 		uint8_t posIdx = idx % 8;
 
-		value = holdingRegisters[idx];
+		value = holdingRegisters_[idx];
 
 		return true;
 	}
@@ -199,7 +199,12 @@ namespace ModbusProt
 		// Write data to output stream
 		try {
 			os.write((char*)&byteCount_, 1);
-			os.write((char*)&holdingRegisters, byteCount_);
+
+			uint16_t sendBuffer[MAX_BYTE_LEN/2];
+			for (uint16_t idx = 0; idx < byteCount_/2; idx++) {
+				sendBuffer[idx] = ByteOrder::toBig(holdingRegisters_[idx]);
+			}
+			os.write((char*)sendBuffer, byteCount_);
 		}
 		catch (std::ostream::failure e) {
 			return false;
@@ -215,7 +220,12 @@ namespace ModbusProt
 		try {
 			is.read((char*)&byteCount_, 1);
 			if (byteCount_ > MAX_BYTE_LEN) return false;
-			is.read((char*)&holdingRegisters, byteCount_);
+
+			uint16_t recvBuffer[MAX_BYTE_LEN/2];
+			is.read((char*)recvBuffer, byteCount_);
+			for (uint32_t idx = 0; idx < byteCount_/2; idx++) {
+				holdingRegisters_[idx] = ByteOrder::fromBig(recvBuffer[idx]);
+			}
 		}
 		catch (std::istream::failure e) {
 			return false;
