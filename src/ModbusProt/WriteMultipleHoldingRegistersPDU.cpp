@@ -134,7 +134,12 @@ namespace ModbusProt
 			os.write((char*)&quantityOfRegisters, 2);
 
 			os.write((char*)&byteCount_, 1);
-			os.write((char*)&registersValue_, byteCount_);
+
+			uint16_t sendBuffer[MAX_BYTE_LEN];
+			for (uint32_t idx = 0; idx < byteCount_/2; idx++) {
+				sendBuffer[idx] = ByteOrder::toBig(registersValue_[idx]);
+			}
+			os.write((char*)sendBuffer, byteCount_);
 		}
 		catch (std::ostream::failure e) {
 			return false;
@@ -155,7 +160,13 @@ namespace ModbusProt
 
 			is.read((char*)&byteCount_, 1);
 			if (byteCount_ > (MAX_BYTE_LEN/2)) return false;
-			is.read((char*)&registersValue_, (uint32_t)byteCount_);
+
+			uint16_t recvBuffer[MAX_BYTE_LEN/2];
+			is.read((char*)recvBuffer, (uint32_t)byteCount_);
+			for (uint32_t idx = 0; idx < byteCount_/2; idx++) {
+				registersValue_[idx] = ByteOrder::fromBig(recvBuffer[idx]);
+			}
+
 		}
 		catch (std::istream::failure e) {
 			return false;
