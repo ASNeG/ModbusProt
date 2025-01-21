@@ -479,6 +479,7 @@ namespace ModbusTCP
 	TCPClient::close(void)
 	{
 		// Cancel timer
+		shutdown_ = true;
 		if (timer_ != nullptr) timer_->cancel();
 
 		// Close and cancel socket connection to tcp server
