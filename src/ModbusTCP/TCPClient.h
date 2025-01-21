@@ -48,6 +48,14 @@ namespace ModbusTCP
 		using ClientChannel = asio::experimental::channel<void(asio::error_code, ModbusTCPQueueElement::SPtr)>;
 		using StateCallback = std::function<void (TCPClientState)>;
 
+		enum class Result
+		{
+			Ok,
+			Error,
+			SocketError,
+			EndOfFile
+		};
+
 		TCPClient(
 			asio::io_context& ctx
 		);
@@ -107,7 +115,7 @@ namespace ModbusTCP
 			std::array<char, 512>& recvBuffer,
 			uint32_t* recvBufferLen
 		);
-		asio::awaitable<bool> recvFromChannel(
+		asio::awaitable<TCPClient::Result> recvFromChannel(
 			ModbusTCPQueueElement::SPtr& qe
 		);
 		asio::awaitable<void> clientLoop(

@@ -79,9 +79,10 @@ namespace ModbusTCP
 	void
 	TCPClient::setState(TCPClientState tcpClientState)
 	{
-
-
-
+		logHandler_->logList(Base::LogLevel::Debug, {
+			"change state from", tcpClientStateToString(tcpClientState_),
+			"to", tcpClientStateToString(tcpClientState)
+		});
 		std::lock_guard<std::mutex> guard(mutex_);
 		tcpClientState_= tcpClientState;
 		stateCallback_(tcpClientState_);
@@ -266,7 +267,7 @@ namespace ModbusTCP
 		co_return true;
 	}
 
-	asio::awaitable<bool>
+	asio::awaitable<TCPClient::Result>
 	TCPClient::recvFromChannel(
 		ModbusTCPQueueElement::SPtr& qe
 	)
@@ -281,20 +282,26 @@ namespace ModbusTCP
 
 		bool error = false;
 		if (result.index() == 1) {
+			auto [e, n] = std::get<1>(result);
+			if (e) {
+				socket_->close();
+				logHandler_->logList(Base::LogLevel::Error, {"receive socket error:", e.message()});
+				co_return Result::EndOfFile;
+			}
 			// timed out
-			co_return false;
+			co_return Result::Error;
 		}
 		else {
 			auto [e, queueElement] = std::get<0>(result);
 			if (e) {
 				// Send error
 				logHandler_->logList(Base::LogLevel::Error, {"receive channel error:", e.message()});
-				co_return false;
+				co_return Result::Error;
 			}
 			qe = queueElement;
 		}
 
-		co_return true;
+		co_return Result::Ok;
 	}
 
 	bool
@@ -362,26 +369,42 @@ namespace ModbusTCP
 		std::cout << "TCPClient::clientLoop" << std::endl;
 		bool rc = true;
 
-		socket_ = std::make_shared<asio::ip::tcp::socket>(co_await asio::this_coro::executor);
 		timer_ = std::make_shared<asio::steady_timer>(co_await asio::this_coro::executor);
+		socket_ = std::make_shared<asio::ip::tcp::socket>(co_await asio::this_coro::executor);
 
 		while(true) {
+
 			// Connect to server
 			auto rc = co_await connectToServer(targetEndpoint);
 			if (!rc) break;
 
 			uint16_t tid = 1;
-			while (true) {
+			bool recv_send_running = true;
+			while (recv_send_running) {
 
 				// Receive element from client channel
 				ModbusTCPQueueElement::SPtr qe;
-				rc = co_await recvFromChannel(qe);
-				if (!rc) {
+				auto result = co_await recvFromChannel(qe);
+				if (result == Result::Error) {
+					logHandler_->logList(Base::LogLevel::Error, {"recveive channel error (channel)"});
 					// Set close state
 					timer_ = nullptr;
 					socket_ = nullptr;
 					setState(TCPClientState::Down);
 					co_return;
+				}
+				else if (result == Result::EndOfFile) {
+					if (reconnectTimeout_ == 0) {
+						// Set close state
+						timer_ = nullptr;
+						socket_ = nullptr;
+						setState(TCPClientState::Down);
+						co_return;
+					}
+					logHandler_->logList(Base::LogLevel::Error, {"recveive channel error (socket)"});
+					setState(TCPClientState::Close);
+					recv_send_running = false;
+					continue;
 				}
 
 				// Encode modbus data to modbus pdu
