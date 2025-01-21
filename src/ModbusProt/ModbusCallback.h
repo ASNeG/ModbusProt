@@ -30,7 +30,8 @@ namespace ModbusProt
 		Ok,
 		ConnectionError,
 		EncodeDataError,
-		DecodeDataError
+		DecodeDataError,
+		Timeout
 	};
 
 	using ResponseCallback = std::function<void (ModbusError modbusError, ModbusPDU::SPtr& req, ModbusPDU::SPtr& res)>;
