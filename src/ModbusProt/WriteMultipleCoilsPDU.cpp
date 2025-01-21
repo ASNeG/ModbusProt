@@ -77,7 +77,6 @@ namespace ModbusProt
 
 		byteCount_ = ((count-1)/8) + 1;
 		memcpy(outputsValue_, value, byteCount_);
-		std::cout << "YYYYYYYY" << (uint32_t)byteCount_ << std::endl;
 		return true;
 	}
 
@@ -146,11 +145,6 @@ namespace ModbusProt
 		if (ModbusPDU::encode(os) == false) {
 			return false;
 		}
-
-		std::cout << "*** " << (uint32_t)startingAddress_ << std::endl;
-		std::cout << "*** " << (uint32_t)quantityOfOutputs_ << std::endl;
-		std::cout << "*** " << (uint32_t)byteCount_ << std::endl;
-
 
 		// Write data to output stream
 		try {
