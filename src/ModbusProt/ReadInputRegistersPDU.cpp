@@ -199,7 +199,13 @@ namespace ModbusProt
 		// Write data to output stream
 		try {
 			os.write((char*)&byteCount_, 1);
-			os.write((char*)&inputRegisters_, byteCount_);
+
+			uint16_t sendBuffer[MAX_BYTE_LEN/2];
+			for (uint32_t idx = 0; idx < byteCount_/2; idx++) {
+				sendBuffer[idx] = ByteOrder::toBig(inputRegisters_[idx]);
+			}
+
+			os.write((char*)sendBuffer, byteCount_);
 		}
 		catch (std::ostream::failure e) {
 			return false;
@@ -215,7 +221,13 @@ namespace ModbusProt
 		try {
 			is.read((char*)&byteCount_, 1);
 			if (byteCount_ > MAX_BYTE_LEN) return false;
-			is.read((char*)&inputRegisters_, byteCount_);
+
+			uint16_t recvBuffer[MAX_BYTE_LEN/2];
+			is.read((char*)recvBuffer, byteCount_);
+
+			for (uint32_t idx = 0; idx < byteCount_/2; idx++) {
+				inputRegisters_[idx] = ByteOrder::fromBig(recvBuffer[idx]);
+			}
 		}
 		catch (std::istream::failure e) {
 			return false;

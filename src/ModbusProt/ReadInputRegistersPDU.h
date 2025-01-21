@@ -67,7 +67,7 @@ namespace ModbusProt
 
 	  private:
 		uint8_t byteCount_ = 0x00;
-		uint16_t inputRegisters_[MAX_BYTE_LEN];
+		uint16_t inputRegisters_[MAX_BYTE_LEN/2];
 
 		bool value_ = true;
 	};
