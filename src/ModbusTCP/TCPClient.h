@@ -51,9 +51,8 @@ namespace ModbusTCP
 		enum class Result
 		{
 			Ok,
-			Error,
 			SocketError,
-			EndOfFile
+			ChannelError
 		};
 
 		TCPClient(

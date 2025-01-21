@@ -132,6 +132,7 @@ namespace ModbusTCP
 			setState(TCPClientState::Connecting);
 
 			// Connect tcp connection to server
+			if (socket_->is_open()) socket_->close();
 			auto result = co_await(
 				socket_->async_connect(targetEndpoint, use_nothrow_awaitable) ||
 				timeout(std::chrono::milliseconds(connectTimeout_))
@@ -281,21 +282,19 @@ namespace ModbusTCP
 		);
 
 		bool error = false;
-		if (result.index() == 1) {
+		if (result.index() == 1) { // Socket communication stopped
 			auto [e, n] = std::get<1>(result);
 			if (e) {
-				logHandler_->logList(Base::LogLevel::Error, {"receive socket error:", e.message()});
-				co_return Result::EndOfFile;
+				logHandler_->logList(Base::LogLevel::Debug, {"channel exit with socket error:", e.message()});
 			}
-			// timed out
-			co_return Result::Error;
+			co_return Result::SocketError;
 		}
-		else {
+		else { // Channel communication stopped
 			auto [e, queueElement] = std::get<0>(result);
 			if (e) {
 				// Send error
-				logHandler_->logList(Base::LogLevel::Error, {"receive channel error:", e.message()});
-				co_return Result::Error;
+				logHandler_->logList(Base::LogLevel::Debug, {"channel exit with channel error:", e.message()});
+				co_return Result::ChannelError;
 			}
 			qe = queueElement;
 		}
@@ -385,15 +384,15 @@ namespace ModbusTCP
 				// Receive element from client channel
 				ModbusTCPQueueElement::SPtr qe;
 				auto result = co_await recvFromChannel(qe);
-				if (result == Result::Error) {
-					logHandler_->logList(Base::LogLevel::Error, {"recveive channel error (channel)"});
+				if (result == Result::ChannelError) {
+					logHandler_->logList(Base::LogLevel::Error, {"receive channel error (channel)"});
 					// Set close state
 					timer_ = nullptr;
 					socket_ = nullptr;
 					setState(TCPClientState::Down);
 					co_return;
 				}
-				else if (result == Result::EndOfFile) {
+				else if (result == Result::SocketError) {
 					if (reconnectTimeout_ == 0 || shutdown_ == true) {
 						// Set close state
 						timer_ = nullptr;
@@ -401,7 +400,7 @@ namespace ModbusTCP
 						setState(TCPClientState::Down);
 						co_return;
 					}
-					logHandler_->logList(Base::LogLevel::Error, {"recveive channel error (socket)"});
+					logHandler_->logList(Base::LogLevel::Error, {"receive channel error (socket)"});
 					setState(TCPClientState::Close);
 					recv_send_running = false;
 					continue;
@@ -413,6 +412,7 @@ namespace ModbusTCP
 				rc = encode(qe, tid, sendBuffer, &sendBufferLen);
 				if (!rc) {
 					qe->responseCallback_(ModbusProt::ModbusError::EncodeDataError, qe->req_, qe->res_);
+					recv_send_running = false;
 					continue;
 				}
 
@@ -420,7 +420,10 @@ namespace ModbusTCP
 				rc = co_await sendToServer(sendBuffer, sendBufferLen);
 				if (!rc) {
 					qe->responseCallback_(ModbusProt::ModbusError::ConnectionError, qe->req_, qe->res_);
-					if (reconnectTimeout_ == 0) co_return;
+					if (reconnectTimeout_ == 0) {
+						co_return;
+					}
+					recv_send_running = false;
 					continue;
 				}
 
@@ -430,7 +433,10 @@ namespace ModbusTCP
 				rc = co_await recvFromServer(recvBuffer, &recvBufferLen);
 				if (!rc) {
 					qe->responseCallback_(ModbusProt::ModbusError::ConnectionError, qe->req_, qe->res_);
-					if (reconnectTimeout_ == 0) co_return;
+					if (reconnectTimeout_ == 0) {
+						co_return;
+					}
+					recv_send_running = false;
 					continue;
 				}
 
@@ -438,9 +444,11 @@ namespace ModbusTCP
 				rc = decode(qe, recvBuffer, recvBufferLen);
 				if (!rc) {
 					qe->responseCallback_(ModbusProt::ModbusError::DecodeDataError, qe->req_, qe->res_);
+					recv_send_running = false;
 					continue;
 				}
 			}
+
 		}
 
 		// Remove all elements from queue
