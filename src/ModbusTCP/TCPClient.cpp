@@ -85,7 +85,9 @@ namespace ModbusTCP
 		});
 		std::lock_guard<std::mutex> guard(mutex_);
 		tcpClientState_= tcpClientState;
-		stateCallback_(tcpClientState_);
+		if (stateCallback_) {
+			stateCallback_(tcpClientState_);
+		}
 	}
 
 	std::string

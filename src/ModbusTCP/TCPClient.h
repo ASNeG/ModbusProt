@@ -69,6 +69,7 @@ namespace ModbusTCP
 		void reconnectTimeout(uint32_t reconnectTimeout);
 		void sendTimeout(uint32_t sendTimeout);
 		void recvTimeout(uint32_t recvTimeout);
+		std::string tcpClientStateToString(TCPClientState tcpClientState);
 
 		void connect(
 			asio::ip::tcp::endpoint target,
@@ -89,17 +90,16 @@ namespace ModbusTCP
 
 		std::mutex mutex_;
 		bool clientLoopReady_ = false;
-		TCPClientState tcpClientState_ = TCPClientState::Init;
 		bool shutdown_ = false;
+
+		TCPClientState tcpClientState_ = TCPClientState::Init;
+		StateCallback stateCallback_ = nullptr;
 
 		std::shared_ptr<asio::ip::tcp::socket> socket_ = nullptr;
 		std::shared_ptr<asio::steady_timer> timer_ = nullptr;
-
-		StateCallback stateCallback_;
 		ClientChannel channel_;
 
 		void setState(TCPClientState tcpClientState);
-		std::string tcpClientStateToString(TCPClientState tcpClientState);
 
 		asio::awaitable<bool> timeout(
 			std::chrono::steady_clock::duration duration
