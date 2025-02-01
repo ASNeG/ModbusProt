@@ -6,6 +6,7 @@
 #include "ModbusTCP/TCPClient.h"
 #include "ModbusTCP/TCPServer.h"
 #include "ModbusTCP/TCPServerModel.h"
+#include "ModbusProt/ModbusModel.h"
 #include "ModbusProt/ReadDiscreteInputsPDU.h"
 #include "Condition.h"
 

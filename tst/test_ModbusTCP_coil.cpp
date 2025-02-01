@@ -6,6 +6,7 @@
 #include "ModbusTCP/TCPClient.h"
 #include "ModbusTCP/TCPServer.h"
 #include "ModbusTCP/TCPServerModel.h"
+#include "ModbusProt/ModbusModel.h"
 #include "ModbusProt/ReadCoilsPDU.h"
 #include "ModbusProt/WriteSingleCoilPDU.h"
 #include "ModbusProt/WriteMultipleCoilsPDU.h"
