@@ -20,6 +20,8 @@
 
 #include <memory>
 
+#include "ModbusProt/ModbusModelInterface.h"
+
 namespace ModbusProt
 {
 
@@ -30,7 +32,8 @@ namespace ModbusProt
 		HoldingRegisters
 	};
 
-	class ModbusModelInterface {
+	class ModbusModelInterface
+	{
 	  public:
 		using SPtr = std::shared_ptr<ModbusModelInterface>;
 

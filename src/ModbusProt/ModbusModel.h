@@ -20,15 +20,10 @@
 
 #include <memory>
 
+#include "ModbusProt/ModbusModelInterface.h"
+
 namespace ModbusProt
 {
-
-	enum class MemoryType {
-		Coils,
-		Inputs,
-		InputRegisters,
-		HoldingRegisters
-	};
 
 	class MemoryArea
 	{
@@ -61,7 +56,9 @@ namespace ModbusProt
 		bool getValue(uint16_t address, uint16_t& value);
 	};
 
-	class ModbusModel {
+	class ModbusModel
+	: public ModbusModelInterface
+	{
 	  public:
 		using SPtr = std::shared_ptr<ModbusModel>;
 
@@ -74,10 +71,10 @@ namespace ModbusProt
 			uint16_t startAddress,
 			uint16_t numValues
 		);
-		bool checkType(MemoryType memoryType);
-		bool checkAddress(MemoryType memoryType, uint16_t startAddress, uint16_t numValues);
-		bool setValue(MemoryType memoryType, uint16_t startAddress, uint8_t* values, uint16_t numValues);
-		bool getValue(MemoryType memoryType, uint16_t startAddress, uint8_t* values, uint16_t numValues);
+		bool checkType(MemoryType memoryType) override;
+		bool checkAddress(MemoryType memoryType, uint16_t startAddress, uint16_t numValues) override;
+		bool setValue(MemoryType memoryType, uint16_t startAddress, uint8_t* values, uint16_t numValues) override;
+		bool getValue(MemoryType memoryType, uint16_t startAddress, uint8_t* values, uint16_t numValues) override;
 
 	  private:
 		MemoryArea::SPtr memoryAreaCoils_ = nullptr;
