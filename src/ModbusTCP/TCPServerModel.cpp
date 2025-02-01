@@ -54,7 +54,7 @@ namespace ModbusTCP
 
 	void
 	TCPServerModel::addModbusModel(
-		ModbusProt::ModbusModel::SPtr modbusModel
+		ModbusProt::ModbusModelInterface::SPtr modbusModel
 	)
 	{
 		modbusModel_ = modbusModel;

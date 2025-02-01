@@ -20,7 +20,7 @@
 
 #include <memory>
 
-#include "ModbusProt/ModbusModel.h"
+#include "ModbusProt/ModbusModelInterface.h"
 #include "ModbusTCP/TCPServerHandler.h"
 
 namespace ModbusTCP
@@ -43,7 +43,7 @@ namespace ModbusTCP
 		);
 
 		void addModbusModel(
-			ModbusProt::ModbusModel::SPtr modbusModel
+			ModbusProt::ModbusModelInterface::SPtr modbusModel
 		);
 
 		bool handleModbusReq(
@@ -54,7 +54,7 @@ namespace ModbusTCP
 
 	  private:
 
-		ModbusProt::ModbusModel::SPtr modbusModel_ = nullptr;
+		ModbusProt::ModbusModelInterface::SPtr modbusModel_ = nullptr;
 
 		bool handleReadCoilsReq(
 			uint8_t unitIdentifier,
