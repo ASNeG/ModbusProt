@@ -54,6 +54,8 @@ namespace ModbusTCP
 			void
 		);
 
+		static std::string tcpServerStateToString(TCPServerState tcpServerState);
+
 		void recvTimeout(uint32_t recvTimeout);
 		void sendTimeout(uint32_t sendTimeout);
 

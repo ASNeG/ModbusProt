@@ -50,6 +50,18 @@ namespace ModbusTCP
 	{
 	}
 
+	std::string
+	TCPServerHandler::tcpServerStateToString(TCPServerState tcpServerState)
+	{
+		switch (tcpServerState)
+		{
+			case TCPServerState::Init: return "Init";
+			case TCPServerState::Connected: return "Connected";
+			case TCPServerState::Down: return "Down";
+			default: return "Unknown";
+		}
+	}
+
 	void
 	TCPServerHandler::recvTimeout(uint32_t recvTimeout)
 	{
