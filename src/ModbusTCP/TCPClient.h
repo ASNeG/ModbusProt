@@ -83,6 +83,7 @@ namespace ModbusTCP
 		);
 
 	  private:
+		bool firstConnect_ = true;
 		uint32_t connectTimeout_ = 1000; 		/* 1000 milliseconds */
 		uint32_t reconnectTimeout_ = 0;			/* 0 milliseconds */
 		uint32_t sendTimeout_ = 1000;			/* 1000 milliseconds */

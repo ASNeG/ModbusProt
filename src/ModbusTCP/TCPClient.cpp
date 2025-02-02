@@ -125,6 +125,34 @@ namespace ModbusTCP
 	{
 		std::cout << "TCPClient::connectToServer" << std::endl;
 
+		// Check if the reconnect timeout needs to be applied
+		if (firstConnect_ == false) {
+			// Check end condition
+			if (reconnectTimeout_ == 0) {
+				// Set close state
+				logHandler_->logList(Base::LogLevel::Error, {
+					"disconnect to ip", targetEndpoint.address().to_string(),
+					"and port", std::to_string(targetEndpoint.port())
+				});
+				setState(TCPClientState::Close);
+				co_return false;
+			}
+
+			// Apply reconnect time
+			setState(TCPClientState::WaitForReconnect);
+			auto rc = co_await timeout(std::chrono::milliseconds(reconnectTimeout_));
+			if (!rc) {
+				// Set close state
+				logHandler_->logList(Base::LogLevel::Error, {
+					"reconnect error to ip", targetEndpoint.address().to_string(),
+					"and port", std::to_string(targetEndpoint.port())
+				});
+				setState(TCPClientState::Close);
+				co_return false;
+			}
+		}
+		firstConnect_ = false;
+
 		logHandler_->logList(Base::LogLevel::Debug, {
 			"connecting to ip", targetEndpoint.address().to_string(),
 			"and port", std::to_string(targetEndpoint.port())
@@ -377,7 +405,9 @@ namespace ModbusTCP
 
 			// Connect to server
 			auto rc = co_await connectToServer(targetEndpoint);
-			if (!rc) break;
+			if (!rc) {
+				break;
+			}
 
 			uint16_t tid = 1;
 			bool recv_send_running = true;
