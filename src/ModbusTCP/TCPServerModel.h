@@ -19,6 +19,7 @@
 #define __ModbusTCP_TCPServerModel_h__
 
 #include <memory>
+#include <map>
 
 #include "ModbusProt/ModbusModelInterface.h"
 #include "ModbusTCP/TCPServerHandler.h"
@@ -31,6 +32,7 @@ namespace ModbusTCP
 	{
 	  public:
 		using SPtr = std::shared_ptr<TCPServerModel>;
+		using Map = std::map<uint32_t, SPtr>;
 
 		TCPServerModel(
 			asio::io_context& ctx
