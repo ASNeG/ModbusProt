@@ -1,2 +1,3 @@
 build*
 src/Analyse/cppstd20-code
+*.log
