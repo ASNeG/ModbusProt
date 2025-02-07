@@ -124,7 +124,7 @@ namespace ModbusTCP
 		);
 		asio::awaitable<void> addToChannel(
 			uint8_t unitIdentifier,
-			ModbusProt::ModbusPDU::SPtr& req,
+			ModbusProt::ModbusPDU::SPtr req,
 			ModbusProt::ResponseCallback responseCallback
 		);
 		asio::awaitable<void> close(void);

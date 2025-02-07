@@ -357,7 +357,9 @@ namespace ModbusTCP
 		ss.rdbuf()->pubsetbuf(sendBuffer.data(), sendBuffer.size());
 		bool rc = modbusTCPReq.encode(ss);
 		if (!rc) {
-			logHandler_->logList(Base::LogLevel::Error, {"client encode error"});
+			logHandler_->logList(Base::LogLevel::Error, {
+				"client encode error:", modbusTCPReq.errorString()
+			});
 			return false;
 		}
 		*sendBufferLen = ss.tellp();
@@ -379,7 +381,9 @@ namespace ModbusTCP
 		ss.rdbuf()->pubsetbuf(recvBuffer.data(), recvBufferLen);
 		bool rc = modbusTCPRes.decode(ss);
 		if (!rc) {
-			logHandler_->logList(Base::LogLevel::Error, {"client decode error"});
+			logHandler_->logList(Base::LogLevel::Error, {
+				"client decode error:", modbusTCPRes.errorString()
+			});
 			return false;
 		}
 
@@ -437,6 +441,11 @@ namespace ModbusTCP
 					recv_send_running = false;
 					continue;
 				}
+
+				logHandler_->logList(Base::LogLevel::Debug, {
+					"handle modbus tcp client message from channel in state",
+					 tcpClientStateToString(tcpClientState_)
+				});
 
 				// Encode modbus data to modbus pdu
 				std::array<char, 512> sendBuffer;
@@ -545,7 +554,7 @@ namespace ModbusTCP
 	asio::awaitable<void>
 	TCPClient::addToChannel(
 		uint8_t unitIdentifier,
-		ModbusProt::ModbusPDU::SPtr& req,
+		ModbusProt::ModbusPDU::SPtr req,
 		ModbusProt::ResponseCallback responseCallback
 	)
 	{
@@ -580,6 +589,20 @@ namespace ModbusTCP
 	)
 	{
 		std::cout << "TCPClient::send" << std::endl;
+
+		// Check request
+		if (req == nullptr) {
+			logHandler_->logList(Base::LogLevel::Error, {
+				"client insert pdu to channel error:","request empty"
+			});
+
+			ModbusProt::ModbusPDU::SPtr req = nullptr;
+			ModbusProt::ModbusPDU::SPtr res = nullptr;
+			responseCallback(ModbusProt::ModbusError::ConnectionError, req, res);
+			return;
+		}
+
+		// Add request to channel
 		co_spawn(ctx(), addToChannel(unitIdentifier, req, responseCallback), asio::detached);
 	}
 
