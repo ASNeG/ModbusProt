@@ -36,6 +36,12 @@ namespace ModbusTCP
 	{
 	}
 
+	std::string&
+	ModbusTCP::errorString(void)
+	{
+		return errorString_;
+	}
+
 	void
 	ModbusTCP::transactionIdentifier(uint16_t transactionIdentifier)
 	{
@@ -101,12 +107,14 @@ namespace ModbusTCP
 	{
 		// check parameter
 		if (modbusPDU_ == nullptr) {
+			errorString_ = "modbus pdu is null";
 			return false;
 		}
 
 		// Get length of PDU
 		std::stringstream ss;
 		if (!modbusPDU_->encode(ss)) {
+			errorString_ = "encode modbus pdu error";
 			return false;
 		}
 		ss.seekg(0, std::ios::end);
@@ -127,11 +135,13 @@ namespace ModbusTCP
 			os.write((char*)&unitIdentifier_, 1);
 		}
 		catch (std::ostream::failure e) {
+			errorString_ = "encode mbap header error";
 			return false;
 		}
 
 		// Encode modbus PDU data
 		if (!modbusPDU_->encode(os)) {
+			errorString_ = "encode pdu data error";
 			return false;
 		}
 
@@ -158,19 +168,29 @@ namespace ModbusTCP
 			is.read((char*)&unitIdentifier_, 1);
 		}
 		catch (std::ostream::failure e) {
+			errorString_ = "decode mbap header error";
 			return false;
 		}
 
 		// Decode function code of modbus PDU
 		ModbusPDU modbusPDU(PDUFunction::None, pduType_);
-		if (!modbusPDU.decode(is)) return false;
+		if (!modbusPDU.decode(is)) {
+			errorString_ = "decode pdu type error";
+			return false;
+		}
 
 		// Create modbus PDU class
 		modbusPDU_ = ModbusPDUFactory::createModbusPDU(modbusPDU.pduFunction(), modbusPDU.pduType());
-		if (modbusPDU_ == nullptr) return false;
+		if (modbusPDU_ == nullptr) {
+			errorString_ = "modbus factory error";
+			return false;
+		}
 
 		// Decode modbus PDU data
-		if (!modbusPDU_->decode(is)) return false;
+		if (!modbusPDU_->decode(is)) {
+			errorString_ = "decode pda data error";
+			return false;
+		}
 
 		return true;
 	}

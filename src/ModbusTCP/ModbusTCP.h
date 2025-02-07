@@ -29,6 +29,7 @@ namespace ModbusTCP
 		ModbusTCP(void);
 		~ModbusTCP(void);
 
+		std::string& errorString(void);
 		void transactionIdentifier(uint16_t transactionIdentifier);
 		uint16_t transactionIdentifier(void);
 		void protocolIdentifier(uint16_t protocolIdentifier);
@@ -45,6 +46,7 @@ namespace ModbusTCP
 		bool decode(std::istream& is);
 
 	  private:
+		mutable std::string errorString_ = "";
 		uint16_t transactionIdentifier_ = 0;
 		uint16_t protocolIdentifier_= 0;
 		uint16_t length_ = 0;
