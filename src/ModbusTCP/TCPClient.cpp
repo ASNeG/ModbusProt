@@ -443,7 +443,9 @@ namespace ModbusTCP
 				}
 
 				logHandler_->logList(Base::LogLevel::Debug, {
-					"handle modbus tcp client message from channel in state",
+					"send modbus tcp client",
+					pduFunctionToString(qe->req_->pduFunction()),
+					"message from channel in state",
 					 tcpClientStateToString(tcpClientState_)
 				});
 
